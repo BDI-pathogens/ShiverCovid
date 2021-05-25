@@ -1,11 +1,11 @@
 # About
 
-The workflow includes:
+The workflow includes the following software and steps:
 
 - preprocessing
-- shiver
-- iqtree
-- pangolin
+- shiver (https://github.com/ChrisHIV/shiver)
+- iqtree (http://www.iqtree.org/)
+- pangolin (https://github.com/cov-lineages/pangolin)
 - qc
 
 The workflow will fail upon error. Once an issue is resolved, it can be restarted and will do so at the point of failure.
@@ -68,18 +68,20 @@ module load python/2.7.11
     cd ShiverCovid/workflow
     ```
 
-1. Replace all `"<to_be_completed>"` references in `_config.yaml` and `submit.sh` with information specific to your environment.
+1. Replace all `"<to_be_completed>"` references in `_config.yaml` with information specific to your environment.
 
 1. Prepare workflow files:
     ```
     ./prepare.sh <Raw Data Directory>
     ```
 
-1. Submit the jobs to the cluster:
+1. Execute the Snakemake workflow.
 
-    ```
-    nohup ./submit.sh &
-    ```
+   A script has been provided to submit the job to an SGE cluster:
+   - Replace `SGE_ROOT="<to_be_completed>"` with the approprate directory information in `submit.sh`.
+   - Submit the jobs to the cluster: `nohup ./submit.sh &`
+   
+   Further information about executing Snakemake can be found in the documentation (https://snakemake.readthedocs.io/en/stable/).
 
 ### Completion flag
 
@@ -87,28 +89,4 @@ Once processing is complete, a flag file is created in the `COMPLETION_FLAG_DIR`
 
 ### Log files
 
-The main Snakemake output will be in `nohup.out`. The location of logs associated with each script will be detailed there.
-
-### Processing failure
-
-Upon failure:
- 
-1. Investigate the cause of the failure.
-
-1. Perform any necessary remial action.
-
-1. Submit the jobs as before. Snakemake will restart at the point of failure.
-
-### Lock files
-
-If a Snakemake process ends abruptly, some lock files may remain that will prevent a restart. Remove them as follows:
-
-`rm .snakemake/locks/*`
-
-### Rulegraph
-
-To create a directed acyclic graph (DAG) of the rules:
-
-`./rulegraph.sh`
-
-This will output a file called `rulegraph.svg`.
+The location of logs associated with each script will be detailed in the Snakemake output.

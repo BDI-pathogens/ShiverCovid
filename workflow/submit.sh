@@ -5,8 +5,6 @@ set -e
 SCRIPT_DIR="$(pwd)"
 PARENT_PARENT_DIR=$(dirname "$(dirname "$(pwd)")")
 PLATE_ID="$(basename "${PARENT_PARENT_DIR}")"
-SNAKEMAKE_BIN="<to_be_completed>"
-CONDA_BASE_BIN="<to_be_completed>"
 SGE_ROOT="<to_be_completed>"
 QSUB_DIR="${SGE_ROOT}/bin/lx-amd64"
 
@@ -20,7 +18,7 @@ check_file_exists() {
 }
 
 run() {
-  "${SNAKEMAKE_BIN}"/snakemake \
+  "$(which snakemake)" \
     --cluster "${QSUB_DIR}/qsub -cwd -P {params.project} -q {params.queues} -pe shmem {params.cores} -o /dev/null -j y -v PATH={params.conda_bin}:$PATH -S /bin/bash" \
     --jobs 50 \
     --jn "{rulename}_${PLATE_ID}.{jobid}.sh" \
@@ -40,5 +38,5 @@ parser.add_argument('-c', '--config', default="config.yaml", type=str,
                     help='name of config file [default %(default)s]')
 EOF
 check_file_exists "${CONFIG}"
-eval "$("${CONDA_BASE_BIN}"/conda shell.bash hook)"
+eval "$("$(which -a conda | grep condabin)" shell.bash hook)"
 run

@@ -1,5 +1,5 @@
 COMPLETION_FLAG_DIR: "<to_be_completed>"
-CONDA_BIN: "<to_be_completed>"
+CONDA_BIN: "<to_be_completed>"  # The bin directory of covidenv
 SHIVER_INSTALL: "<to_be_completed>"
 KRAKEN2_HIV_DB: "<to_be_completed>"
 
