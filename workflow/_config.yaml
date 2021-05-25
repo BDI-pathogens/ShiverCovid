@@ -1,0 +1,36 @@
+COMPLETION_FLAG_DIR: "<to_be_completed>"
+CONDA_BIN: "<to_be_completed>"
+SHIVER_INSTALL: "<to_be_completed>"
+KRAKEN2_HIV_DB: "<to_be_completed>"
+
+ADAPTERS_FILE: "adapters-all.fasta"
+LINEAGE_FILE: "lineages-20200622.csv.gz"  # Note: Max one "-" in the filename
+REF_STEM_FILE: "NC_045512.2_SARS_CoV2_Wuhan.fasta"
+
+SHIVER_INIT_DIR: "ShiverInitDir"
+RAW_SHIVER_CONFIG: "shiver_config_raw.sh"
+RAW_MINCOV_RELAXED: 2
+RAW_MINCOV_STRICT: 5
+
+BASEFREQS_MINCOV_RELAXED_RUN1: 20
+BASEFREQS_MINCOV_STRICT_RUN1: 100
+BASEFREQS_MINCOV_RELAXED_RUN2: 10
+BASEFREQS_MINCOV_STRICT_RUN2: 50
+
+CLUSTER_PROJECT_NAME: "fraser.prjc"
+
+CLUSTER_CONFIG_CORES_1:
+  - queues: "<to_be_completed>"  # Comma separated list
+  - cores: 1
+
+CLUSTER_CONFIG_CORES_4:
+  - queues: "<to_be_completed>"  # Comma separated list
+  - cores: 4
+
+CLUSTER_CONFIG_CORES_8:
+  - queues: "<to_be_completed>"  # Comma separated list
+  - cores: 8
+
+CLUSTER_CONFIG_CORES_12:
+  - queues: "<to_be_completed>"  # Comma separated list
+  - cores: 12

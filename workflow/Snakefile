@@ -1,0 +1,702 @@
+from datetime import datetime
+from os import getcwd
+from os.path import join, dirname
+
+
+def remove_trailing_slash(dir_string):
+    if dir_string.endswith('/'):
+        dir_string = dir_string[:-1]
+    return dir_string
+
+
+# General config
+REPO_BASE_DIR = dirname(getcwd())
+PROCESSING_DIR = dirname(REPO_BASE_DIR)
+RAW_DATA_DIR = remove_trailing_slash(config["RAW_DATA_DIR"])
+SAMPLES = config["SAMPLES"]
+PLATE_ID = config["PLATE_ID"]
+COMPLETION_FLAG_DIR = config["COMPLETION_FLAG_DIR"]
+CONDA_BIN = config["CONDA_BIN"]
+SHIVER_INSTALL = config["SHIVER_INSTALL"]
+KRAKEN2_HIV_DB = config["KRAKEN2_HIV_DB"]
+LINEAGE_FILE = join(REPO_BASE_DIR,"workflow","auxfiles",config["LINEAGE_FILE"])
+ADAPTERS_FILE = join(REPO_BASE_DIR,"workflow","auxfiles",config["ADAPTERS_FILE"])
+REF_STEM_FILE = join(REPO_BASE_DIR,"workflow","auxfiles",config["REF_STEM_FILE"])
+
+# Shiver config
+SHIVER_INIT_DIR = join(REPO_BASE_DIR,"workflow","auxfiles",config["SHIVER_INIT_DIR"])
+RAW_SHIVER_CONFIG = join(REPO_BASE_DIR,"workflow","auxfiles",config["RAW_SHIVER_CONFIG"])
+RAW_MINCOV_RELAXED_STR = str(config["RAW_MINCOV_RELAXED"])
+RAW_MINCOV_STRICT_STR = str(config["RAW_MINCOV_STRICT"])
+BASEFREQS_MINCOV_RELAXED_STR_RUN1 = str(config["BASEFREQS_MINCOV_RELAXED_RUN1"])
+BASEFREQS_MINCOV_STRICT_STR_RUN1 = str(config["BASEFREQS_MINCOV_STRICT_RUN1"])
+BASEFREQS_MINCOV_RELAXED_STR_RUN2 = str(config["BASEFREQS_MINCOV_RELAXED_RUN2"])
+BASEFREQS_MINCOV_STRICT_STR_RUN2 = str(config["BASEFREQS_MINCOV_STRICT_RUN2"])
+
+# Cluster config
+CLUSTER_PROJECT_NAME = config["CLUSTER_PROJECT_NAME"]
+CORES_1_QUEUES = config['CLUSTER_CONFIG_CORES_1'][0]['queues']
+CORES_1_CORES = config['CLUSTER_CONFIG_CORES_1'][1]['cores']
+CORES_4_QUEUES = config['CLUSTER_CONFIG_CORES_4'][0]['queues']
+CORES_4_CORES = config['CLUSTER_CONFIG_CORES_4'][1]['cores']
+CORES_8_QUEUES = config['CLUSTER_CONFIG_CORES_8'][0]['queues']
+CORES_8_CORES = config['CLUSTER_CONFIG_CORES_8'][1]['cores']
+CORES_12_QUEUES = config['CLUSTER_CONFIG_CORES_12'][0]['queues']
+CORES_12_CORES = config['CLUSTER_CONFIG_CORES_12'][1]['cores']
+
+# Output dirs
+OUTPUT_DIR_PIPELINE = join(PROCESSING_DIR,"pipeline-output")
+OUTPUT_DIR_SHIVER_RAW = join(PROCESSING_DIR,"shiver-output-raw")
+OUTPUT_DIR_SHIVER_BASEFREQS = join(PROCESSING_DIR,"shiver-output-basefreqs")
+OUTPUT_DIR_QC = join(PROCESSING_DIR,"qc-output")
+OUTPUT_DIR_IQTREE = join(PROCESSING_DIR,"iqtree-output")
+OUTPUT_DIR_PANGOLIN = join(PROCESSING_DIR,"pangolin-output")
+OUTPUT_DIR_PREFIX_SHIVER_MAP = join(PROCESSING_DIR,"shiver-map-reads-")
+
+# Log dirs
+LOG_DIR = "logs"
+LOG_DIR_PIPELINE = join(OUTPUT_DIR_PIPELINE,LOG_DIR)
+LOG_DIR_SHIVER_RAW = join(OUTPUT_DIR_SHIVER_RAW,LOG_DIR)
+LOG_DIR_SHIVER_BASEFREQS = join(OUTPUT_DIR_SHIVER_BASEFREQS,LOG_DIR)
+LOG_DIR_QC = join(OUTPUT_DIR_QC,LOG_DIR)
+LOG_DIR_IQTREE = join(OUTPUT_DIR_IQTREE,LOG_DIR)
+LOG_DIR_PANGOLIN = join(OUTPUT_DIR_PANGOLIN,LOG_DIR)
+
+
+rule all:
+    input:
+        pipeline_kraken_gzip=expand(OUTPUT_DIR_PIPELINE + "/{samples}.kraken.gz",samples=SAMPLES),
+        shiver_samtools_index=expand(OUTPUT_DIR_SHIVER_RAW + "/{samples}.bam.bai",samples=SAMPLES),
+        shiver_cleanup=expand(LOG_DIR_SHIVER_RAW + "/{samples}_shiver_cleanup.complete",samples=SAMPLES),
+        gapstrip_raw=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{samples}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.gapstrip.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR,samples=SAMPLES),
+        gapstrip_run2=expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{samples}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.gapstrip.fasta",
+            basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+            basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,samples=SAMPLES),
+        iqtree_contree=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.contree"),
+        pangolin_combined_csv=join(OUTPUT_DIR_PANGOLIN,f"pangolin_{PLATE_ID}.csv"),
+        qc_combined_csv=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv"),
+        completion_flag=join(COMPLETION_FLAG_DIR,f"{PLATE_ID}.complete"),
+        gzip_clean1=expand(OUTPUT_DIR_PIPELINE + "/{samples}_1_clean.fastq.gz",samples=SAMPLES),
+        gzip_clean2=expand(OUTPUT_DIR_PIPELINE + "/{samples}_2_clean.fastq.gz",samples=SAMPLES),
+        gzip_filt1=expand(OUTPUT_DIR_PIPELINE + "/{samples}_1_filt.fastq.gz",samples=SAMPLES),
+        gzip_filt2=expand(OUTPUT_DIR_PIPELINE + "/{samples}_2_filt.fastq.gz",samples=SAMPLES)
+
+
+rule pangolin_update:  # This only needs to be run once per plate
+    input:
+        gzrawfastq_fwd=expand(RAW_DATA_DIR + "/{samples}_1.fastq.gz",samples=SAMPLES),
+        gzrawfastq_bwd=expand(RAW_DATA_DIR + "/{samples}_2.fastq.gz",samples=SAMPLES),
+        script=join(REPO_BASE_DIR,"workflow","scripts","pangolin","pangolin_update.sh")
+    output: flag=join(LOG_DIR_PANGOLIN,f"pangolin_update.complete")
+    log: join(LOG_DIR_PANGOLIN,"pangolin_update.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {output.flag} {log} >{log} 2>&1"
+
+rule pipeline_decompress:
+    input:
+        gzrawfastq_fwd=expand(RAW_DATA_DIR + "/{{samples}}_1.fastq.gz"),
+        gzrawfastq_bwd=expand(RAW_DATA_DIR + "/{{samples}}_2.fastq.gz"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","decompress.sh")
+    output:
+        rawfastq_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq")),
+        rawfastq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_decompress.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.gzrawfastq_fwd} {input.gzrawfastq_bwd} {output.rawfastq_fwd} {output.rawfastq_bwd} \
+{log} >{log} 2>&1"
+
+rule pipeline_gc:
+    input:
+        rawfastq_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","gc.sh"),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","gc.py")
+    output:
+        gc=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_gc.txt")
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_gc.log")
+    params:
+        base_dir=REPO_BASE_DIR,
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.py_script} {params.conda_bin} {input.rawfastq_fwd} {output.gc} {log} >{log} 2>&1"
+
+rule pipeline_kraken2:
+    input:
+        rawfastq_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq"),
+        rawfastq_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","kraken2.sh")
+    output:
+        kraken=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken")),
+        kraken_report=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken.report"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_kraken2.log")
+    params:
+        conda_bin=CONDA_BIN,
+        kraken2_db=KRAKEN2_HIV_DB,
+        kraken2_threads=4,
+        queues=CORES_4_QUEUES,
+        cores=CORES_4_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {params.conda_bin} {input.rawfastq_fwd} {input.rawfastq_bwd} \
+{output.kraken} {output.kraken_report} {params.kraken2_db} {params.kraken2_threads} {log} >{log} 2>&1"
+
+rule pipeline_filter_keep_reads:
+    input:
+        rawfastq_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq"),
+        rawfastq_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"),
+        kraken=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken"),
+        lineage=LINEAGE_FILE,
+        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","filter_keep_reads.sh"),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","filter_keep_reads.py")
+    output:
+        filt_fwd=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq")),
+        filt_bwd=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_filter_keep_reads.log")
+    params:
+        conda_bin=CONDA_BIN,
+        output_dir_pipeline=OUTPUT_DIR_PIPELINE,
+        kraken2_db=KRAKEN2_HIV_DB,
+        queues=CORES_4_QUEUES,
+        cores=CORES_4_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.py_script} {params.conda_bin} \
+{input.rawfastq_fwd} {input.rawfastq_bwd} {input.kraken} {output.filt_fwd} {output.filt_bwd} \
+{params.output_dir_pipeline} {input.lineage} {log} >{log} 2>&1"
+
+rule pipeline_kraken_gzip:
+    input:
+        kraken=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken"),
+        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),# Run after pipeline_filter_keep_reads
+        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq")
+    output:
+        kraken=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken.gz")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "gzip {input.kraken}"
+
+rule pipeline_trimmomatic:
+    input:
+        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
+        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"),
+        adapters=ADAPTERS_FILE,
+        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","trimmomatic.sh")
+    output:
+        clean_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq"),
+        clean_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq"),
+        tmp_fq_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_1_trimmings.fq")),
+        tmp_fq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_2_trimmings.fq"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_trimmomatic.log")
+    params:
+        trimmomatic_threads=4,
+        trimmomatic_minlen=80,
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {params.conda_bin} {input.filt_fwd} {input.filt_bwd} \
+{output.clean_fwd} {output.clean_bwd} {output.tmp_fq_fwd} {output.tmp_fq_bwd} {input.adapters} \
+{params.trimmomatic_threads} {params.trimmomatic_minlen} {log} >{log} 2>&1"
+
+rule shiver_preprocess_readnames_fwd:
+    input:
+        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames_fwd.sh"),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames.py")
+    output:
+        tmp_reads_fwd=temp(expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads1.fastq"))
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_fwd.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.py_script} {params.conda_bin} {input.filt_fwd} {output.tmp_reads_fwd} {log} >{log} 2>&1"
+
+rule shiver_preprocess_readnames_bwd:
+    input:
+        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames_bwd.sh"),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames.py")
+    output:
+        tmp_reads_bwd=temp(expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads2.fastq"))
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_bwd.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.py_script} {params.conda_bin} {input.filt_bwd} {output.tmp_reads_bwd} {log} >{log} 2>&1"
+
+rule shiver_map_reads:
+    input:
+        clean_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq"),
+        clean_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq"),
+        tmp_reads_fwd=expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads1.fastq"),
+        tmp_reads_bwd=expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads2.fastq"),
+        shiver_config=RAW_SHIVER_CONFIG,
+        ref_stem=REF_STEM_FILE,
+        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","run_shiver_map_reads.sh"),
+        shiver_script=join(SHIVER_INSTALL,"shiver_map_reads.sh")
+    output:
+        tmp_bam=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}.bam"),
+        tmp_base_freqs=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_BaseFreqs.csv"),
+        tmp_base_freqs_glob=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_BaseFreqs_ForGlobalAln.csv"),
+        tmp_dedup_stats=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_DedupStats.txt"),
+        tmp_insert_size=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_InsertSizeCounts.csv"),
+        tmp_prededup=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_PreDedup.bam"),
+        tmp_consensus=expand(
+            OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        tmp_consensus_glob=expand(
+            OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}_ForGlobalAln.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        tmp_coords=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_coords.csv"),
+        tmp_ref_fasta=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_ref.fasta"),
+        tmp_ref_fasta_fai=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_ref.fasta.fai"),
+        tmp_blast=temp(expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}.blast")),
+        tmp_shiver_contigs=temp(expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_contigs.fasta"))
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_map_reads.log")
+    params:
+        sequence=expand("{{samples}}"),
+        tmp_dir_sequence=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
+        conda_bin=CONDA_BIN,
+        shiver_initdir=SHIVER_INIT_DIR,
+        queues=CORES_4_QUEUES,
+        cores=CORES_4_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {params.sequence} {params.shiver_initdir} {input.shiver_config} \
+{input.shiver_script} {params.tmp_dir_sequence} {input.clean_fwd} {input.clean_bwd} \
+{input.tmp_reads_fwd} {input.tmp_reads_bwd} {output.tmp_bam} {output.tmp_base_freqs} {output.tmp_base_freqs_glob} \
+{output.tmp_dedup_stats} {output.tmp_insert_size} {output.tmp_prededup} {output.tmp_consensus} \
+{output.tmp_consensus_glob} {output.tmp_coords} {output.tmp_ref_fasta} {output.tmp_ref_fasta_fai} {output.tmp_blast} \
+{output.tmp_shiver_contigs} {input.ref_stem} {log} >{log} 2>&1"
+
+rule shiver_map_reads_copy:
+    input:
+        tmp_bam=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}.bam"),
+        tmp_base_freqs=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_BaseFreqs.csv"),
+        tmp_base_freqs_glob=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_BaseFreqs_ForGlobalAln.csv"),
+        tmp_dedup_stats=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_DedupStats.txt"),
+        tmp_insert_size=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_InsertSizeCounts.csv"),
+        tmp_prededup=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_PreDedup.bam"),
+        tmp_consensus=expand(
+            OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        tmp_consensus_glob=expand(
+            OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}_ForGlobalAln.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        tmp_coords=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_coords.csv"),
+        tmp_ref_fasta=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_ref.fasta"),
+        tmp_ref_fasta_fai=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}_ref.fasta.fai")
+    output:
+        bam=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}.bam"),
+        base_freqs=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_BaseFreqs.csv"),
+        base_freqs_glob=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_BaseFreqs_ForGlobalAln.csv"),
+        dedup_stats=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_DedupStats.txt"),
+        insert_size=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_InsertSizeCounts.csv"),
+        prededup=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_PreDedup.bam"),
+        consensus=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        consensus_glob=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}_ForGlobalAln.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        coords=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_coords.csv"),
+        ref_fasta=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_ref.fasta"),
+        ref_fasta_fai=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_ref.fasta.fai")
+    params:
+        conda_bin=CONDA_BIN,
+        shiver_output_dir=OUTPUT_DIR_SHIVER_RAW,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "cp {input.tmp_bam} {params.shiver_output_dir}; \
+cp {input.tmp_base_freqs} {params.shiver_output_dir}; \
+cp {input.tmp_base_freqs_glob} {params.shiver_output_dir}; \
+cp {input.tmp_dedup_stats} {params.shiver_output_dir}; \
+cp {input.tmp_insert_size} {params.shiver_output_dir}; \
+cp {input.tmp_prededup} {params.shiver_output_dir}; \
+cp {input.tmp_consensus} {params.shiver_output_dir}; \
+cp {input.tmp_consensus_glob} {params.shiver_output_dir}; \
+cp {input.tmp_coords} {params.shiver_output_dir}; \
+cp {input.tmp_ref_fasta} {params.shiver_output_dir}; \
+cp {input.tmp_ref_fasta_fai} {params.shiver_output_dir}"
+
+rule shiver_cleanup:
+    input:
+        qc=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv")  # Don't run until after QC
+    output:
+        flag=expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_cleanup.complete")
+    priority: 10  # Prioritise over gzip_fastq
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_cleanup.log")
+    params:
+        tmp_dir_shiver_map=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "rm -rf {params.tmp_dir_shiver_map} >{log} 2>&1; touch {output.flag}"
+
+rule shiver_samtools_index:
+    input: bam=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}.bam")
+    output: bai=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}.bam.bai")
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_samtools_index.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "if [[ ! -s {input.bam} ]]; \
+then touch {output.bai}; \
+else {params.conda_bin}/samtools index {input.bam} >{log} 2>&1; fi"
+
+rule shiver_basefreqs:
+    input:
+        bam_pre_dedup=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_PreDedup.bam"),
+        ref_stem=REF_STEM_FILE,
+        script_analyse_pileup=join(SHIVER_INSTALL,"tools","AnalysePileup.py"),
+        script_call_consensus=join(SHIVER_INSTALL,"tools","CallConsensus.py"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","shiver_basefreqs.sh")
+    output:
+        basefreqs=protected(expand(OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_PreDedup_BaseFreqs.csv")),
+        basefreqs_consensus_run1=protected(expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run1}_{basefreqs_mincov_strict_str_run1}.fasta",
+            basefreqs_mincov_relaxed_str_run1=BASEFREQS_MINCOV_RELAXED_STR_RUN1,
+            basefreqs_mincov_strict_str_run1=BASEFREQS_MINCOV_STRICT_STR_RUN1)),
+        basefreqs_consensus_run2=protected(expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.fasta",
+            basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+            basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2)),
+        tmp_pileup=temp(expand(OUTPUT_DIR_SHIVER_BASEFREQS + "/temp_{{samples}}_PreDedup.pileup"))
+    log: expand(LOG_DIR_SHIVER_BASEFREQS + "/{{samples}}_shiver_basefreqs_run1.log")
+    params:
+        min_base_quality=5,
+        max_depth=1000000,
+        mincov_relaxed_run1=BASEFREQS_MINCOV_RELAXED_STR_RUN1,
+        mincov_strict_run1=BASEFREQS_MINCOV_STRICT_STR_RUN1,
+        mincov_relaxed_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+        mincov_strict_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,
+        conda_bin=CONDA_BIN,
+        queues=CORES_4_QUEUES,
+        cores=CORES_4_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.script_analyse_pileup} {input.script_call_consensus} \
+{params.conda_bin} {input.bam_pre_dedup} {output.basefreqs} {output.basefreqs_consensus_run1} \
+{output.basefreqs_consensus_run2} {output.tmp_pileup} {input.ref_stem} {params.mincov_relaxed_run1} \
+{params.mincov_strict_run1} {params.mincov_relaxed_run2} {params.mincov_strict_run2} \
+{params.min_base_quality} {params.max_depth} {log} >{log} 2>&1"
+
+rule shiver_gapstrip_raw:
+    input:
+        raw_consensus=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","ungap_record.py")
+    output:
+        gapstrip=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.gapstrip.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR)
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_gapstrip_raw.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{params.conda_bin}/python {input.py_script} {input.raw_consensus} {output.gapstrip} {log} >{log} 2>&1"
+
+rule pangolin:
+    input:
+        gapstrip=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.gapstrip.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        script=join(REPO_BASE_DIR,"workflow","scripts","pangolin","pangolin.sh"),
+        update_flag=join(LOG_DIR_PANGOLIN,"pangolin_update.complete"),
+        script_seq_len=join(REPO_BASE_DIR,"workflow","scripts","utils","print_seq_lengths.py")
+    output:
+        csv=expand(
+            OUTPUT_DIR_PANGOLIN + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.pangolin.csv",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR)
+    log: expand(LOG_DIR_PANGOLIN + "/{{samples}}_pangolin.log")
+    params:
+        coverage_min=0.2,
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.script_seq_len} {params.conda_bin} {input.gapstrip} {output.csv} \
+{params.coverage_min} {log} >{log} 2>&1"
+
+rule pangolin_combine_csvs:
+    input:
+        csvs=expand(
+            OUTPUT_DIR_PANGOLIN + "/{samples}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.pangolin.csv",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR,samples=SAMPLES),
+        script=join(REPO_BASE_DIR,"workflow","scripts","pangolin","combine_csvs.sh")
+    output:
+        combined_csv=join(OUTPUT_DIR_PANGOLIN,f"pangolin_{PLATE_ID}.csv")
+    log: join(LOG_DIR_PANGOLIN,f"pangolin_combine_csvs_{PLATE_ID}.log")
+    params:
+        output_dir_pangolin=OUTPUT_DIR_PANGOLIN,
+        pangolin_file_suffix=f"_consensus_MinCov_{RAW_MINCOV_RELAXED_STR}_{RAW_MINCOV_STRICT_STR}.pangolin.csv",
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {output.combined_csv} {params.output_dir_pangolin} {params.pangolin_file_suffix} {log} >{log} 2>&1"
+
+rule shiver_gapstrip_basefreqs_run2:
+    input:
+        basefreqs_consensus_run2=expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.fasta",
+            basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+            basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","ungap_record.py")
+    output:
+        gapstrip_run2=expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.gapstrip.fasta",
+            basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+            basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2)
+    log: expand(LOG_DIR_SHIVER_BASEFREQS + "/{{samples}}_shiver_gapstrip_basefreqs_run2.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{params.conda_bin}/python {input.py_script} {input.basefreqs_consensus_run2} {output.gapstrip_run2} \
+{log} >{log} 2>&1"
+
+rule iqtree_filter:
+    input:
+        consensus_glob=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}_ForGlobalAln.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        py_script=join(REPO_BASE_DIR,"workflow","scripts","iqtree","filter_fasta_by_coverage.py")
+    output:
+        fasta=temp(expand(OUTPUT_DIR_IQTREE + "/{{samples}}_nc20.fasta"))
+    log: expand(LOG_DIR_IQTREE + "/{{samples}}_iqtree_filter.log")
+    params:
+        gap_prop=0.9,# Range (0, 1)
+        gap_char="?",
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{params.conda_bin}/python {input.py_script} {input.consensus_glob} {params.gap_prop} {params.gap_char} \
+{output.fasta} {log} >{log} 2>&1"
+
+rule iqtree_filter_combine:
+    input:
+        fastas=expand(OUTPUT_DIR_IQTREE + "/{samples}_nc20.fasta",samples=SAMPLES),
+        script=join(REPO_BASE_DIR,"workflow","scripts","iqtree","combine_fastas.sh")
+    output:
+        combined_fastas=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta")
+    log: join(LOG_DIR_IQTREE,f"iqtree_filter_combine_{PLATE_ID}.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {output.combined_fastas} {log} {input.fastas} >{log} 2>&1"
+
+rule iqtree:
+    input:
+        combined_fastas=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","iqtree","run_iqtree.sh")
+    output:
+        contree=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.contree"),
+        iqtree=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.iqtree"),
+        mldist=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.mldist"),
+        splits=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.splits.nex"),
+        treefile=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.treefile")
+    log: join(LOG_DIR_IQTREE,f"iqtree_{PLATE_ID}.log")
+    params:
+        bootstrap_replicates=1000,
+        substitution_model='GTR+F',
+        conda_bin=CONDA_BIN,
+        queues=CORES_12_QUEUES,
+        cores=CORES_12_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {params.conda_bin} {input.combined_fastas} {output.contree} {output.iqtree} \
+{output.mldist} {output.splits} {output.treefile} {params.cores} {params.substitution_model} \
+{params.bootstrap_replicates} {log} >{log} 2>&1"
+
+rule qc:
+    input:
+        rawfastq_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq"),
+        gc=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_gc.txt"),
+        kraken_report=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken.report"),
+        bam=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}.bam"),
+        bam_pre_dedup=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_PreDedup.bam"),
+        insert_size=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_InsertSizeCounts.csv"),
+        dedup_stats=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_DedupStats.txt"),
+        consensus_raw=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
+        consensus_basefreqs_run1=expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run1}_{basefreqs_mincov_strict_str_run1}.fasta",
+            basefreqs_mincov_relaxed_str_run1=BASEFREQS_MINCOV_RELAXED_STR_RUN1,
+            basefreqs_mincov_strict_str_run1=BASEFREQS_MINCOV_STRICT_STR_RUN1),
+        consensus_basefreqs_run2=expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.fasta",
+            basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+            basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2),
+        script_iz=join(REPO_BASE_DIR,"workflow","scripts","qc","iz_stats_from_shiver.py"),
+        script_seq_len=join(REPO_BASE_DIR,"workflow","scripts","utils","print_seq_lengths.py"),
+        script=join(REPO_BASE_DIR,"workflow","scripts","qc","qc_consensus.sh")
+    output:
+        csv=expand(OUTPUT_DIR_QC + "/qc_{{samples}}.csv")
+    log: expand(LOG_DIR_QC + "/{{samples}}_qc.log")
+    params:
+        # Placeholder - name TBC. May not exist, so not defined as input. Space separated file expected
+        vl_file=join(REPO_BASE_DIR,"vl.txt"),
+        sequence=expand("{{samples}}"),
+        processing_dir=PROCESSING_DIR,
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.script_iz} {input.script_seq_len} \
+{params.sequence} {params.processing_dir} {params.conda_bin} \
+{input.rawfastq_fwd} {input.gc} {input.kraken_report} {input.bam} {input.bam_pre_dedup} {input.insert_size}  \
+{input.dedup_stats} {input.consensus_raw} {input.consensus_basefreqs_run1} {input.consensus_basefreqs_run2} \
+{params.vl_file} {output.csv} {log} >{log} 2>&1"
+
+rule qc_combine_csvs:
+    input:
+        csvs=expand(OUTPUT_DIR_QC + "/qc_{samples}.csv",samples=SAMPLES),
+        script=join(REPO_BASE_DIR,"workflow","scripts","qc","combine_csvs.sh")
+    output:
+        combined_csv=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv")
+    log: join(LOG_DIR_QC,f"qc_combine_csvs_{PLATE_ID}.log")
+    params:
+        conda_bin=CONDA_BIN,
+        mincov_relaxed_raw=RAW_MINCOV_RELAXED_STR,
+        mincov_strict_raw=RAW_MINCOV_STRICT_STR,
+        mincov_relaxed_basefreqs_run1=BASEFREQS_MINCOV_RELAXED_STR_RUN1,
+        mincov_strict_basefreqs_run1=BASEFREQS_MINCOV_STRICT_STR_RUN1,
+        mincov_relaxed_basefreqs_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+        mincov_strict_basefreqs_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,
+        raw_data_dir=RAW_DATA_DIR,
+        processing_dir=PROCESSING_DIR,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {output.combined_csv} {params.mincov_relaxed_raw} {params.mincov_strict_raw} \
+{params.mincov_relaxed_basefreqs_run1} {params.mincov_strict_basefreqs_run1} \
+{params.mincov_relaxed_basefreqs_run2} {params.mincov_strict_basefreqs_run2} {log} {input.csvs} >{log} 2>&1"
+
+rule completion_flag:
+    input:
+        shiver_samtools_index=expand(OUTPUT_DIR_SHIVER_RAW + "/{samples}.bam.bai",samples=SAMPLES),
+        gapstrip_raw=expand(
+            OUTPUT_DIR_SHIVER_RAW + "/{samples}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.gapstrip.fasta",
+            raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR,samples=SAMPLES),
+        gapstrip_run2=expand(
+            OUTPUT_DIR_SHIVER_BASEFREQS + "/{samples}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.gapstrip.fasta",
+            basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
+            basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,samples=SAMPLES),
+        iqtree_contree=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.contree"),
+        pangolin_combined_csv=join(OUTPUT_DIR_PANGOLIN,f"pangolin_{PLATE_ID}.csv"),
+        qc_combined_csv=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv")
+    output: flag=join(COMPLETION_FLAG_DIR,f"{PLATE_ID}.complete")
+    params:
+        raw_data_dir=RAW_DATA_DIR,
+        processing_dir=PROCESSING_DIR,
+        completion_flag_dir=COMPLETION_FLAG_DIR,
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "mkdir -p {params.completion_flag_dir}; \
+echo 'RAW_DATA_DIR='{params.raw_data_dir} > {output.flag}; \
+echo 'PROCESSING_DIR='{params.processing_dir} >> {output.flag};"
+
+rule gzip_fastq_clean1:
+    input:
+        qc=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv"),# Don't run until after QC
+        clean1=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq")
+    output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq.gz")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "gzip {input.clean1}"
+
+rule gzip_fastq_clean2:
+    input:
+        qc=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv"),# Don't run until after QC
+        clean2=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq")
+    output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq.gz")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "gzip {input.clean2}"
+
+rule gzip_fastq_filt1:
+    input:
+        qc=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv"),# Don't run until after QC
+        filt1=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq")
+    output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq.gz")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "gzip {input.filt1}"
+
+rule gzip_fastq_filt2:
+    input:
+        qc=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv"),# Don't run until after QC
+        filt2=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq")
+    output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq.gz")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "gzip {input.filt2}"
