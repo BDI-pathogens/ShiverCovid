@@ -5,8 +5,6 @@ set -e
 SCRIPT_DIR="$(pwd)"
 PARENT_PARENT_DIR=$(dirname "$(dirname "$(pwd)")")
 PLATE_ID="$(basename "${PARENT_PARENT_DIR}")"
-SGE_ROOT="<to_be_completed>"
-QSUB_DIR="${SGE_ROOT}/bin/lx-amd64"
 
 check_file_exists() {
   file="${1}"
@@ -19,7 +17,7 @@ check_file_exists() {
 
 run() {
   "$(which snakemake)" \
-    --cluster "${QSUB_DIR}/qsub -cwd -P {params.project} -q {params.queues} -pe shmem {params.cores} -o /dev/null -j y -v PATH={params.conda_bin}:$PATH -S /bin/bash" \
+    --cluster "$(which qsub) -cwd -P {params.project} -q {params.queues} -pe shmem {params.cores} -o /dev/null -j y -v PATH={params.conda_bin}:$PATH -S /bin/bash" \
     --jobs 50 \
     --jn "{rulename}_${PLATE_ID}.{jobid}.sh" \
     --use-conda \

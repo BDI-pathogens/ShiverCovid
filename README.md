@@ -77,9 +77,7 @@ module load python/2.7.11
 
 1. Execute the Snakemake workflow.
 
-   A script has been provided to submit the job to an SGE cluster:
-   - Replace `SGE_ROOT="<to_be_completed>"` with the approprate directory information in `submit.sh`.
-   - Submit the jobs to the cluster: `nohup ./submit.sh &`
+   A script has been provided to submit the job to an SGE cluster: `submit.sh`
    
    Further information about executing Snakemake can be found in the documentation (https://snakemake.readthedocs.io/en/stable/).
 
