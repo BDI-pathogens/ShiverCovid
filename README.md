@@ -26,7 +26,7 @@ The project relies on two Kraken databases, which are not yet part of this repo 
 
 Ensure the conda environment exists:
 ```
-conda activate covidenv
+conda activate shivercovid
 conda deactivate
 ```
 If it doesn't exist, create it. E.g:

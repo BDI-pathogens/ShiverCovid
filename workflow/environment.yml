@@ -1,4 +1,4 @@
-name: covidenv
+name: shivercovid
 channels:
   - anaconda
   - conda-forge
