@@ -56,7 +56,7 @@ module load python/2.7.11
 
 ## Manual setup
 
-1. Create a `samples.tx` file in the raw data directory containing a list of samples for processing, with one sample per row.
+1. Create a `samples.txt` file in the raw data directory containing a list of samples for processing, with one sample per row.
 
 1. Create a directory for data processing, e.g. `YYYY-MM-DD_<Batch Name(s)>`.
 
