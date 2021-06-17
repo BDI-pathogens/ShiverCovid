@@ -13,7 +13,7 @@ The workflow will fail upon error. Once an issue is resolved, it can be restarte
 # Prerequisites
 
 - Miniconda 3
-- Snakemake (compatible with release 5.5.4)
+- Snakemake
 - shiver 1.5.8 (and associated prerequisites) *
 
 The pipeline has been tested on a Linux environment using an SGE cluster.
