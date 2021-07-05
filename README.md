@@ -18,7 +18,7 @@ The workflow will fail upon error. Once an issue is resolved, it can be restarte
 
 The pipeline has been tested on a Linux environment using an SGE cluster.
 
-The project relies on two Kraken databases, which are not yet part of this repo so this solution is not currently (standalone) portable.
+The project relies on a Kraken 2 database, which is not yet part of this repo so this solution is not currently (standalone) portable.
 
 \* The shiver package available in conda is out of date, and relies on `2to3`.
 
