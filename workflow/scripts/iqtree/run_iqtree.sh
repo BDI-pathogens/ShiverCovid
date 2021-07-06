@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 CONDA_BIN="${1}"
 IN_FILE_COMBINED_FASTAS="${2}"
