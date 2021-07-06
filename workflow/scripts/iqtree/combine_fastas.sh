@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 OUT_FILE="${1}"
 LOG="${2}"

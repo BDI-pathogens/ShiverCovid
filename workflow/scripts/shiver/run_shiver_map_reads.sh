@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 SEQUENCE="${1}"
 SHIVER_INITDIR="${2}"

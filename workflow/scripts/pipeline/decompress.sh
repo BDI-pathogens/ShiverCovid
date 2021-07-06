@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 IN_FILE_FASTQFWD_GZ="${1}"
 IN_FILE_FASTQBWD_GZ="${2}"
