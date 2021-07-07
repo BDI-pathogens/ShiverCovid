@@ -1,4 +1,3 @@
-from datetime import datetime
 from os import getcwd
 from os.path import join, dirname
 
@@ -329,23 +328,15 @@ rule shiver_map_reads_copy:
         ref_fasta=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_ref.fasta"),
         ref_fasta_fai=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_ref.fasta.fai")
     params:
+        sample=expand("{{samples}}"),
         conda_bin=CONDA_BIN,
+        shiver_sample_dir=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
         shiver_output_dir=OUTPUT_DIR_SHIVER_RAW,
         queues=CORES_1_QUEUES,
         cores=CORES_1_CORES,
         project=CLUSTER_PROJECT_NAME
     shell:
-        "cp {input.tmp_bam} {params.shiver_output_dir}; \
-cp {input.tmp_base_freqs} {params.shiver_output_dir}; \
-cp {input.tmp_base_freqs_glob} {params.shiver_output_dir}; \
-cp {input.tmp_dedup_stats} {params.shiver_output_dir}; \
-cp {input.tmp_insert_size} {params.shiver_output_dir}; \
-cp {input.tmp_prededup} {params.shiver_output_dir}; \
-cp {input.tmp_consensus} {params.shiver_output_dir}; \
-cp {input.tmp_consensus_glob} {params.shiver_output_dir}; \
-cp {input.tmp_coords} {params.shiver_output_dir}; \
-cp {input.tmp_ref_fasta} {params.shiver_output_dir}; \
-cp {input.tmp_ref_fasta_fai} {params.shiver_output_dir}"
+        "cp {params.shiver_sample_dir}/{params.sample}* {params.shiver_output_dir}"
 
 rule shiver_cleanup:
     input:
