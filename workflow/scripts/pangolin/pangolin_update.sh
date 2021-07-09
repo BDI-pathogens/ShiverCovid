@@ -7,12 +7,31 @@ LOG="${2}"
 
 update_pangolin() {
   set +e
-  pangolin --update
-  # shellcheck disable=SC2181
-  while [ $? -ne 0 ]; do
-    pangolin --update
-  done
+  msg=$(pangolin --update)
+  retVal=$?
   set -e
+  echo "${msg}"
+
+  echo "INFO: Pangolin update return value: ${retVal}"
+  if [[ ${retVal} -ne 0 ]]; then
+    if [[ ${msg} != *"Unable to connect to reach github API"* ]]; then
+      echo "ERROR: Pangolin update failed. Exiting..."
+      exit ${retVal}
+    else
+      echo "INFO: Pangolin update unsuccessful. Retrying..."
+      set +e
+      msg=$(pangolin --update)
+      retVal=$?
+      set -e
+      echo "${msg}"
+      if [[ ${retVal} -ne 0 ]]; then
+        echo "ERROR: Pangolin update retry failed. Exiting..."
+        exit ${retVal}
+      else
+        echo "INFO: Pangolin update retry return value: ${retVal}"
+      fi
+    fi
+  fi
 }
 
 {
