@@ -25,7 +25,7 @@ check_file_exists() {
   file="${1}"
   echo "INFO: Checking for ${file}"
   if [[ ! -f "${file}" ]]; then
-    echo "ERROR: ${file} missing from current directory. Exiting..."
+    echo "ERROR: ${file} missing. Exiting..."
     exit 1
   fi
 }
