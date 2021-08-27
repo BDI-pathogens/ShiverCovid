@@ -338,22 +338,6 @@ rule shiver_map_reads_copy:
     shell:
         "cp {params.shiver_sample_dir}/{params.sample}* {params.shiver_output_dir}"
 
-rule shiver_cleanup:
-    input:
-        qc=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv")  # Don't run until after QC
-    output:
-        flag=expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_cleanup.complete")
-    priority: 10  # Prioritise over gzip_fastq
-    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_cleanup.log")
-    params:
-        tmp_dir_shiver_map=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
-        conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
-        project=CLUSTER_PROJECT_NAME
-    shell:
-        "rm -rf {params.tmp_dir_shiver_map} >{log} 2>&1; touch {output.flag}"
-
 rule shiver_samtools_index:
     input: bam=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}.bam")
     output: bai=expand(OUTPUT_DIR_SHIVER_RAW + "/{{samples}}.bam.bai")
@@ -587,6 +571,21 @@ rule qc:
 {input.rawfastq_fwd} {input.gc} {input.kraken_report} {input.bam} {input.bam_pre_dedup} {input.insert_size}  \
 {input.dedup_stats} {input.consensus_raw} {input.consensus_basefreqs_run1} {input.consensus_basefreqs_run2} \
 {params.vl_file} {output.csv} {log} >{log} 2>&1"
+
+rule shiver_cleanup:
+    input:
+        qc=expand(OUTPUT_DIR_QC + "/qc_{{samples}}.csv")
+    output:
+        flag=expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_cleanup.complete")
+    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_cleanup.log")
+    params:
+        tmp_dir_shiver_map=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
+        conda_bin=CONDA_BIN,
+        queues=CORES_1_QUEUES,
+        cores=CORES_1_CORES,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "rm -rf {params.tmp_dir_shiver_map} >{log} 2>&1; touch {output.flag}"
 
 rule qc_combine_csvs:
     input:
