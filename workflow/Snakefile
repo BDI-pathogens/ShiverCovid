@@ -34,14 +34,8 @@ BASEFREQS_MINCOV_STRICT_STR_RUN2 = str(config["BASEFREQS_MINCOV_STRICT_RUN2"])
 
 # Cluster config
 CLUSTER_PROJECT_NAME = config["CLUSTER_PROJECT_NAME"]
-CORES_1_QUEUES = config['CLUSTER_CONFIG_CORES_1'][0]['queues']
-CORES_1_CORES = config['CLUSTER_CONFIG_CORES_1'][1]['cores']
-CORES_4_QUEUES = config['CLUSTER_CONFIG_CORES_4'][0]['queues']
-CORES_4_CORES = config['CLUSTER_CONFIG_CORES_4'][1]['cores']
-CORES_8_QUEUES = config['CLUSTER_CONFIG_CORES_8'][0]['queues']
-CORES_8_CORES = config['CLUSTER_CONFIG_CORES_8'][1]['cores']
-CORES_12_QUEUES = config['CLUSTER_CONFIG_CORES_12'][0]['queues']
-CORES_12_CORES = config['CLUSTER_CONFIG_CORES_12'][1]['cores']
+CLUSTER_CONFIG_SHORT_QUEUES = config['CLUSTER_CONFIG_SHORT_QUEUES']
+CLUSTER_CONFIG_LONG_QUEUES = config['CLUSTER_CONFIG_LONG_QUEUES']
 
 # Output dirs
 OUTPUT_DIR_PIPELINE = join(PROCESSING_DIR,"pipeline-output")
@@ -93,8 +87,8 @@ rule pangolin_update:  # This only needs to be run once per plate
     log: join(LOG_DIR_PANGOLIN,"pangolin_update.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {output.flag} {log} >{log} 2>&1"
@@ -110,8 +104,8 @@ rule pipeline_decompress:
     log: expand(LOG_DIR_PIPELINE + "/{{samples}}_decompress.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.gzrawfastq_fwd} {input.gzrawfastq_bwd} {output.rawfastq_fwd} {output.rawfastq_bwd} \
@@ -128,8 +122,8 @@ rule pipeline_gc:
     params:
         base_dir=REPO_BASE_DIR,
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.py_script} {params.conda_bin} {input.rawfastq_fwd} {output.gc} {log} >{log} 2>&1"
@@ -147,8 +141,8 @@ rule pipeline_kraken2:
         conda_bin=CONDA_BIN,
         kraken2_db=KRAKEN2_HIV_DB,
         kraken2_threads=4,
-        queues=CORES_4_QUEUES,
-        cores=CORES_4_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=4,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {params.conda_bin} {input.rawfastq_fwd} {input.rawfastq_bwd} \
@@ -170,8 +164,8 @@ rule pipeline_filter_keep_reads:
         conda_bin=CONDA_BIN,
         output_dir_pipeline=OUTPUT_DIR_PIPELINE,
         kraken2_db=KRAKEN2_HIV_DB,
-        queues=CORES_4_QUEUES,
-        cores=CORES_4_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=4,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.py_script} {params.conda_bin} \
@@ -187,8 +181,8 @@ rule pipeline_kraken_gzip:
         kraken=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken.gz")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "gzip {input.kraken}"
@@ -209,8 +203,8 @@ rule pipeline_trimmomatic:
         trimmomatic_threads=4,
         trimmomatic_minlen=80,
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {params.conda_bin} {input.filt_fwd} {input.filt_bwd} \
@@ -227,8 +221,8 @@ rule shiver_preprocess_readnames_fwd:
     log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_fwd.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.py_script} {params.conda_bin} {input.filt_fwd} {output.tmp_reads_fwd} {log} >{log} 2>&1"
@@ -243,8 +237,8 @@ rule shiver_preprocess_readnames_bwd:
     log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_bwd.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.py_script} {params.conda_bin} {input.filt_bwd} {output.tmp_reads_bwd} {log} >{log} 2>&1"
@@ -283,8 +277,8 @@ rule shiver_map_reads:
         tmp_dir_sequence=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
         conda_bin=CONDA_BIN,
         shiver_initdir=SHIVER_INIT_DIR,
-        queues=CORES_4_QUEUES,
-        cores=CORES_4_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=4,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {params.sequence} {params.shiver_initdir} {input.shiver_config} \
@@ -332,8 +326,8 @@ rule shiver_map_reads_copy:
         conda_bin=CONDA_BIN,
         shiver_sample_dir=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
         shiver_output_dir=OUTPUT_DIR_SHIVER_RAW,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "cp {params.shiver_sample_dir}/{params.sample}* {params.shiver_output_dir}"
@@ -344,8 +338,8 @@ rule shiver_samtools_index:
     log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_samtools_index.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "if [[ ! -s {input.bam} ]]; \
@@ -379,8 +373,8 @@ rule shiver_basefreqs:
         mincov_relaxed_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
         mincov_strict_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,
         conda_bin=CONDA_BIN,
-        queues=CORES_4_QUEUES,
-        cores=CORES_4_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=4,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.script_analyse_pileup} {input.script_call_consensus} \
@@ -402,8 +396,8 @@ rule shiver_gapstrip_raw:
     log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_shiver_gapstrip_raw.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{params.conda_bin}/python {input.py_script} {input.raw_consensus} {output.gapstrip} {log} >{log} 2>&1"
@@ -424,8 +418,8 @@ rule pangolin:
     params:
         coverage_min=0.2,
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.script_seq_len} {params.conda_bin} {input.gapstrip} {output.csv} \
@@ -444,8 +438,8 @@ rule pangolin_combine_csvs:
         output_dir_pangolin=OUTPUT_DIR_PANGOLIN,
         pangolin_file_suffix=f"_consensus_MinCov_{RAW_MINCOV_RELAXED_STR}_{RAW_MINCOV_STRICT_STR}.pangolin.csv",
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {output.combined_csv} {params.output_dir_pangolin} {params.pangolin_file_suffix} {log} >{log} 2>&1"
@@ -465,8 +459,8 @@ rule shiver_gapstrip_basefreqs_run2:
     log: expand(LOG_DIR_SHIVER_BASEFREQS + "/{{samples}}_shiver_gapstrip_basefreqs_run2.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{params.conda_bin}/python {input.py_script} {input.basefreqs_consensus_run2} {output.gapstrip_run2} \
@@ -485,8 +479,8 @@ rule iqtree_filter:
         gap_prop=0.9,# Range (0, 1)
         gap_char="?",
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{params.conda_bin}/python {input.py_script} {input.consensus_glob} {params.gap_prop} {params.gap_char} \
@@ -501,8 +495,8 @@ rule iqtree_filter_combine:
     log: join(LOG_DIR_IQTREE,f"iqtree_filter_combine_{PLATE_ID}.log")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {output.combined_fastas} {log} {input.fastas} >{log} 2>&1"
@@ -522,8 +516,8 @@ rule iqtree:
         bootstrap_replicates=1000,
         substitution_model='GTR+F',
         conda_bin=CONDA_BIN,
-        queues=CORES_12_QUEUES,
-        cores=CORES_12_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=12,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {params.conda_bin} {input.combined_fastas} {output.contree} {output.iqtree} \
@@ -562,8 +556,8 @@ rule qc:
         sequence=expand("{{samples}}"),
         processing_dir=PROCESSING_DIR,
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.script_iz} {input.script_seq_len} \
@@ -581,8 +575,8 @@ rule shiver_cleanup:
     params:
         tmp_dir_shiver_map=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}"),
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "rm -rf {params.tmp_dir_shiver_map} >{log} 2>&1; touch {output.flag}"
@@ -604,8 +598,8 @@ rule qc_combine_csvs:
         mincov_strict_basefreqs_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,
         raw_data_dir=RAW_DATA_DIR,
         processing_dir=PROCESSING_DIR,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {output.combined_csv} {params.mincov_relaxed_raw} {params.mincov_strict_raw} \
@@ -631,8 +625,8 @@ rule completion_flag:
         processing_dir=PROCESSING_DIR,
         completion_flag_dir=COMPLETION_FLAG_DIR,
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "mkdir -p {params.completion_flag_dir}; \
@@ -646,8 +640,8 @@ rule gzip_fastq_clean1:
     output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq.gz")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "gzip {input.clean1}"
@@ -659,8 +653,8 @@ rule gzip_fastq_clean2:
     output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq.gz")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "gzip {input.clean2}"
@@ -672,8 +666,8 @@ rule gzip_fastq_filt1:
     output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq.gz")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "gzip {input.filt1}"
@@ -685,8 +679,8 @@ rule gzip_fastq_filt2:
     output: expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq.gz")
     params:
         conda_bin=CONDA_BIN,
-        queues=CORES_1_QUEUES,
-        cores=CORES_1_CORES,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
         "gzip {input.filt2}"
