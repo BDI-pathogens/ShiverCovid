@@ -140,13 +140,12 @@ rule pipeline_kraken2:
     params:
         conda_bin=CONDA_BIN,
         kraken2_db=KRAKEN2_HIV_DB,
-        kraken2_threads=4,
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
         cores=4,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {params.conda_bin} {input.rawfastq_fwd} {input.rawfastq_bwd} \
-{output.kraken} {output.kraken_report} {params.kraken2_db} {params.kraken2_threads} {log} >{log} 2>&1"
+{output.kraken} {output.kraken_report} {params.kraken2_db} {log} {params.cores} >{log} 2>&1"
 
 rule pipeline_filter_keep_reads:
     input:
