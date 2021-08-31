@@ -18,19 +18,5 @@ BASEFREQS_MINCOV_RELAXED_RUN2: 10
 BASEFREQS_MINCOV_STRICT_RUN2: 50
 
 CLUSTER_PROJECT_NAME: "fraser.prjc"
-
-CLUSTER_CONFIG_CORES_1:
-  - queues: "<to_be_completed>"  # Comma separated list
-  - cores: 1
-
-CLUSTER_CONFIG_CORES_4:
-  - queues: "<to_be_completed>"  # Comma separated list
-  - cores: 4
-
-CLUSTER_CONFIG_CORES_8:
-  - queues: "<to_be_completed>"  # Comma separated list
-  - cores: 8
-
-CLUSTER_CONFIG_CORES_12:
-  - queues: "<to_be_completed>"  # Comma separated list
-  - cores: 12
+CLUSTER_CONFIG_SHORT_QUEUES: "<to_be_completed>"  # Comma separated list
+CLUSTER_CONFIG_LONG_QUEUES: "<to_be_completed>"  # Comma separated list
