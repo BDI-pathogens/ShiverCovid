@@ -17,6 +17,6 @@ BASEFREQS_MINCOV_STRICT_RUN1: 100
 BASEFREQS_MINCOV_RELAXED_RUN2: 10
 BASEFREQS_MINCOV_STRICT_RUN2: 50
 
-CLUSTER_PROJECT_NAME: "fraser.prjc"
+CLUSTER_PROJECT_NAME: "<to_be_completed>"
 CLUSTER_CONFIG_SHORT_QUEUES: "<to_be_completed>"  # Comma separated list
 CLUSTER_CONFIG_LONG_QUEUES: "<to_be_completed>"  # Comma separated list
