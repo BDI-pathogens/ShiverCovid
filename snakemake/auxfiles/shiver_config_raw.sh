@@ -3,7 +3,7 @@
 
 set -eu -o pipefail
 
-CONFIG_FILE="../ShiverCovid/workflow/config.yaml" # Relative to OUTPUT_DIR_PREFIX_SHIVER_MAP (set in Snakefile)
+CONFIG_FILE="../ShiverCovid/snakemake/config.yaml" # Relative to OUTPUT_DIR_PREFIX_SHIVER_MAP (set in Snakefile)
 CONDA_BIN=$(grep "CONDA_BIN" <"${CONFIG_FILE}" | sed -e "s/CONDA_BIN: //")
 RAW_MINCOV_RELAXED=$(grep "RAW_MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_RELAXED: //")
 RAW_MINCOV_STRICT=$(grep "RAW_MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_STRICT: //")

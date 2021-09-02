@@ -18,13 +18,13 @@ COMPLETION_FLAG_DIR = config["COMPLETION_FLAG_DIR"]
 CONDA_BIN = config["CONDA_BIN"]
 SHIVER_INSTALL = config["SHIVER_INSTALL"]
 KRAKEN2_HIV_DB = config["KRAKEN2_HIV_DB"]
-LINEAGE_FILE = join(REPO_BASE_DIR,"workflow","auxfiles",config["LINEAGE_FILE"])
-ADAPTERS_FILE = join(REPO_BASE_DIR,"workflow","auxfiles",config["ADAPTERS_FILE"])
-REF_STEM_FILE = join(REPO_BASE_DIR,"workflow","auxfiles",config["REF_STEM_FILE"])
+LINEAGE_FILE = join(REPO_BASE_DIR,"snakemake","auxfiles",config["LINEAGE_FILE"])
+ADAPTERS_FILE = join(REPO_BASE_DIR,"snakemake","auxfiles",config["ADAPTERS_FILE"])
+REF_STEM_FILE = join(REPO_BASE_DIR,"snakemake","auxfiles",config["REF_STEM_FILE"])
 
 # Shiver config
-SHIVER_INIT_DIR = join(REPO_BASE_DIR,"workflow","auxfiles",config["SHIVER_INIT_DIR"])
-RAW_SHIVER_CONFIG = join(REPO_BASE_DIR,"workflow","auxfiles",config["RAW_SHIVER_CONFIG"])
+SHIVER_INIT_DIR = join(REPO_BASE_DIR,"snakemake","auxfiles",config["SHIVER_INIT_DIR"])
+RAW_SHIVER_CONFIG = join(REPO_BASE_DIR,"snakemake","auxfiles",config["RAW_SHIVER_CONFIG"])
 RAW_MINCOV_RELAXED_STR = str(config["RAW_MINCOV_RELAXED"])
 RAW_MINCOV_STRICT_STR = str(config["RAW_MINCOV_STRICT"])
 BASEFREQS_MINCOV_RELAXED_STR_RUN1 = str(config["BASEFREQS_MINCOV_RELAXED_RUN1"])
@@ -77,27 +77,11 @@ rule all:
         gzip_filt1=expand(OUTPUT_DIR_PIPELINE + "/{samples}_1_filt.fastq.gz",samples=SAMPLES),
         gzip_filt2=expand(OUTPUT_DIR_PIPELINE + "/{samples}_2_filt.fastq.gz",samples=SAMPLES)
 
-
-rule pangolin_update:  # This only needs to be run once per plate
-    input:
-        gzrawfastq_fwd=expand(RAW_DATA_DIR + "/{samples}_1.fastq.gz",samples=SAMPLES),
-        gzrawfastq_bwd=expand(RAW_DATA_DIR + "/{samples}_2.fastq.gz",samples=SAMPLES),
-        script=join(REPO_BASE_DIR,"workflow","scripts","pangolin","pangolin_update.sh")
-    output: flag=join(LOG_DIR_PANGOLIN,f"pangolin_update.complete")
-    log: join(LOG_DIR_PANGOLIN,"pangolin_update.log")
-    params:
-        conda_bin=CONDA_BIN,
-        queues=CLUSTER_CONFIG_SHORT_QUEUES,
-        cores=1,
-        project=CLUSTER_PROJECT_NAME
-    shell:
-        "{input.script} {output.flag} {log} >{log} 2>&1"
-
 rule pipeline_decompress:
     input:
         gzrawfastq_fwd=expand(RAW_DATA_DIR + "/{{samples}}_1.fastq.gz"),
         gzrawfastq_bwd=expand(RAW_DATA_DIR + "/{{samples}}_2.fastq.gz"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","decompress.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","decompress.sh")
     output:
         rawfastq_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq")),
         rawfastq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"))
@@ -114,8 +98,8 @@ rule pipeline_decompress:
 rule pipeline_gc:
     input:
         rawfastq_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","gc.sh"),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","gc.py")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","gc.sh"),
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","gc.py")
     output:
         gc=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_gc.txt")
     log: expand(LOG_DIR_PIPELINE + "/{{samples}}_gc.log")
@@ -132,7 +116,7 @@ rule pipeline_kraken2:
     input:
         rawfastq_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq"),
         rawfastq_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","kraken2.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","kraken2.sh")
     output:
         kraken=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken")),
         kraken_report=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken.report"))
@@ -153,8 +137,8 @@ rule pipeline_filter_keep_reads:
         rawfastq_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"),
         kraken=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}.kraken"),
         lineage=LINEAGE_FILE,
-        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","filter_keep_reads.sh"),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","filter_keep_reads.py")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","filter_keep_reads.sh"),
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","filter_keep_reads.py")
     output:
         filt_fwd=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq")),
         filt_bwd=protected(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"))
@@ -191,7 +175,7 @@ rule pipeline_trimmomatic:
         filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
         filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"),
         adapters=ADAPTERS_FILE,
-        script=join(REPO_BASE_DIR,"workflow","scripts","pipeline","trimmomatic.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","trimmomatic.sh")
     output:
         clean_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq"),
         clean_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq"),
@@ -213,8 +197,8 @@ rule pipeline_trimmomatic:
 rule shiver_preprocess_readnames_fwd:
     input:
         filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames_fwd.sh"),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames.py")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames_fwd.sh"),
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames.py")
     output:
         tmp_reads_fwd=temp(expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads1.fastq"))
     log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_fwd.log")
@@ -229,8 +213,8 @@ rule shiver_preprocess_readnames_fwd:
 rule shiver_preprocess_readnames_bwd:
     input:
         filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames_bwd.sh"),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","preprocess_readnames.py")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames_bwd.sh"),
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames.py")
     output:
         tmp_reads_bwd=temp(expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads2.fastq"))
     log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_bwd.log")
@@ -250,7 +234,7 @@ rule shiver_map_reads:
         tmp_reads_bwd=expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads2.fastq"),
         shiver_config=RAW_SHIVER_CONFIG,
         ref_stem=REF_STEM_FILE,
-        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","run_shiver_map_reads.sh"),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","run_shiver_map_reads.sh"),
         shiver_script=join(SHIVER_INSTALL,"shiver_map_reads.sh")
     output:
         tmp_bam=expand(OUTPUT_DIR_PREFIX_SHIVER_MAP + "{{samples}}/{{samples}}.bam"),
@@ -351,7 +335,7 @@ rule shiver_basefreqs:
         ref_stem=REF_STEM_FILE,
         script_analyse_pileup=join(SHIVER_INSTALL,"tools","AnalysePileup.py"),
         script_call_consensus=join(SHIVER_INSTALL,"tools","CallConsensus.py"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","shiver","shiver_basefreqs.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","shiver_basefreqs.sh")
     output:
         basefreqs=protected(expand(OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_PreDedup_BaseFreqs.csv")),
         basefreqs_consensus_run1=protected(expand(
@@ -387,7 +371,7 @@ rule shiver_gapstrip_raw:
         raw_consensus=expand(
             OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.fasta",
             raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","ungap_record.py")
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","ungap_record.py")
     output:
         gapstrip=expand(
             OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.gapstrip.fasta",
@@ -406,9 +390,8 @@ rule pangolin:
         gapstrip=expand(
             OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.gapstrip.fasta",
             raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
-        script=join(REPO_BASE_DIR,"workflow","scripts","pangolin","pangolin.sh"),
-        update_flag=join(LOG_DIR_PANGOLIN,"pangolin_update.complete"),
-        script_seq_len=join(REPO_BASE_DIR,"workflow","scripts","utils","print_seq_lengths.py")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pangolin","pangolin.sh"),
+        script_seq_len=join(REPO_BASE_DIR,"snakemake","scripts","utils","print_seq_lengths.py")
     output:
         csv=expand(
             OUTPUT_DIR_PANGOLIN + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.pangolin.csv",
@@ -429,7 +412,7 @@ rule pangolin_combine_csvs:
         csvs=expand(
             OUTPUT_DIR_PANGOLIN + "/{samples}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}.pangolin.csv",
             raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR,samples=SAMPLES),
-        script=join(REPO_BASE_DIR,"workflow","scripts","pangolin","combine_csvs.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pangolin","combine_csvs.sh")
     output:
         combined_csv=join(OUTPUT_DIR_PANGOLIN,f"pangolin_{PLATE_ID}.csv")
     log: join(LOG_DIR_PANGOLIN,f"pangolin_combine_csvs_{PLATE_ID}.log")
@@ -449,7 +432,7 @@ rule shiver_gapstrip_basefreqs_run2:
             OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.fasta",
             basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
             basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","shiver","ungap_record.py")
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","ungap_record.py")
     output:
         gapstrip_run2=expand(
             OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.gapstrip.fasta",
@@ -470,7 +453,7 @@ rule iqtree_filter:
         consensus_glob=expand(
             OUTPUT_DIR_SHIVER_RAW + "/{{samples}}_consensus_MinCov_{raw_mincov_relaxed_str}_{raw_mincov_strict_str}_ForGlobalAln.fasta",
             raw_mincov_relaxed_str=RAW_MINCOV_RELAXED_STR,raw_mincov_strict_str=RAW_MINCOV_STRICT_STR),
-        py_script=join(REPO_BASE_DIR,"workflow","scripts","iqtree","filter_fasta_by_coverage.py")
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","iqtree","filter_fasta_by_coverage.py")
     output:
         fasta=temp(expand(OUTPUT_DIR_IQTREE + "/{{samples}}_nc20.fasta"))
     log: expand(LOG_DIR_IQTREE + "/{{samples}}_iqtree_filter.log")
@@ -488,7 +471,7 @@ rule iqtree_filter:
 rule iqtree_filter_combine:
     input:
         fastas=expand(OUTPUT_DIR_IQTREE + "/{samples}_nc20.fasta",samples=SAMPLES),
-        script=join(REPO_BASE_DIR,"workflow","scripts","iqtree","combine_fastas.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","iqtree","combine_fastas.sh")
     output:
         combined_fastas=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta")
     log: join(LOG_DIR_IQTREE,f"iqtree_filter_combine_{PLATE_ID}.log")
@@ -503,7 +486,7 @@ rule iqtree_filter_combine:
 rule iqtree:
     input:
         combined_fastas=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","iqtree","run_iqtree.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","iqtree","run_iqtree.sh")
     output:
         contree=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.contree"),
         iqtree=join(OUTPUT_DIR_IQTREE,f"nc20_{PLATE_ID}.fasta.iqtree"),
@@ -543,9 +526,9 @@ rule qc:
             OUTPUT_DIR_SHIVER_BASEFREQS + "/{{samples}}_consensus_MinCov_{basefreqs_mincov_relaxed_str_run2}_{basefreqs_mincov_strict_str_run2}.fasta",
             basefreqs_mincov_relaxed_str_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
             basefreqs_mincov_strict_str_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2),
-        script_iz=join(REPO_BASE_DIR,"workflow","scripts","qc","iz_stats_from_shiver.py"),
-        script_seq_len=join(REPO_BASE_DIR,"workflow","scripts","utils","print_seq_lengths.py"),
-        script=join(REPO_BASE_DIR,"workflow","scripts","qc","qc_consensus.sh")
+        script_iz=join(REPO_BASE_DIR,"snakemake","scripts","qc","iz_stats_from_shiver.py"),
+        script_seq_len=join(REPO_BASE_DIR,"snakemake","scripts","utils","print_seq_lengths.py"),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","qc","qc_consensus.sh")
     output:
         csv=expand(OUTPUT_DIR_QC + "/qc_{{samples}}.csv")
     log: expand(LOG_DIR_QC + "/{{samples}}_qc.log")
@@ -583,7 +566,7 @@ rule shiver_cleanup:
 rule qc_combine_csvs:
     input:
         csvs=expand(OUTPUT_DIR_QC + "/qc_{samples}.csv",samples=SAMPLES),
-        script=join(REPO_BASE_DIR,"workflow","scripts","qc","combine_csvs.sh")
+        script=join(REPO_BASE_DIR,"snakemake","scripts","qc","combine_csvs.sh")
     output:
         combined_csv=join(OUTPUT_DIR_QC,f"qc_{PLATE_ID}.csv")
     log: join(LOG_DIR_QC,f"qc_combine_csvs_{PLATE_ID}.log")
