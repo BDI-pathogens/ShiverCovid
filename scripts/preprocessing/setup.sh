@@ -4,7 +4,6 @@ set -e
 
 RAW_DATA_DIR="${1}"
 REPO_BASE_DIR="$(dirname "$(dirname "$(dirname "$(readlink -f -- "$0")")")")"
-PROCESSING_DIR="$(dirname "${REPO_BASE_DIR}")"
 
 SCRIPT_UPDATE_PANGOLIN="${REPO_BASE_DIR}/scripts/preprocessing/pangolin_update.sh"
 
