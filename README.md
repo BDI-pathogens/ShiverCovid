@@ -1,6 +1,6 @@
 # About
 
-The workflow includes the following software and steps:
+The pipeline includes the following software and steps:
 
 - preprocessing
 - shiver (https://github.com/ChrisHIV/shiver)
@@ -8,7 +8,7 @@ The workflow includes the following software and steps:
 - pangolin (https://github.com/cov-lineages/pangolin)
 - qc
 
-The workflow will fail upon error. Once an issue is resolved, it can be restarted and will do so at the point of failure.
+The snakemake workflow will fail upon error. Once an issue is resolved, it can be restarted and will do so at the point of failure.
 
 # Prerequisites
 
@@ -31,7 +31,7 @@ conda deactivate
 ```
 If it doesn't exist, create it. E.g:
 ```
-conda env create -f ./workflow/environment.yml
+conda env create -f ./snakemake/environment.yml
 ```
 
 ## Pangolin conda environment
@@ -67,19 +67,19 @@ module load python/2.7.11
 
 1. Change directory:
     ```
-    cd ShiverCovid/workflow
+    cd ShiverCovid
     ```
 
-1. Replace all `"<to_be_completed>"` references in `_config.yaml` with information specific to your environment.
+1. Replace all `"<to_be_completed>"` references in `./snakemake/_config.yaml` with information specific to your environment.
 
-1. Prepare workflow files:
+1. Run the preprocessing script:
     ```
-    ./prepare.sh <Raw Data Directory>
+    ./scripts/preprocessing/setup.sh <Raw Data Directory>
     ```
 
 1. Execute the Snakemake workflow.
 
-   A script has been provided to submit the job to an SGE cluster: `submit.sh`
+   A script has been provided to submit the job to an SGE cluster: `./snakemake/submit.sh`
    
    Further information about executing Snakemake can be found in the documentation (https://snakemake.readthedocs.io/en/stable/).
 
