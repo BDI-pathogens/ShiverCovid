@@ -26,12 +26,12 @@ def get_insert_size_stats(instrm, thresh=350):
     n_thresh = 0
     f_thresh = 0
 
-    for l in instrm:
+    for line in instrm:
         try:
-            iz, n, frac = l.split(',')
+            iz, n, frac = line.split(',')
             iz = int(iz)
             frac = float(frac)
-        except:
+        except ValueError:
             continue
         if iz > thresh:
             n_thresh += int(n)

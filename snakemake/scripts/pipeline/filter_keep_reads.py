@@ -8,8 +8,8 @@
 # Import Modules                                                               #
 # ============================================================================ #
 
-from __future__ import print_function
 from __future__ import division
+from __future__ import print_function
 
 import argparse
 import os
@@ -53,17 +53,26 @@ def Initialise():
                                      epilog='Example: {progname} -i /path/to/my/fastq.gz -x 9606'.format(
                                          progname=_progname))
     parser.add_argument('-i', required=True, nargs='*',
-                        help='Fastq[.gz] files to filter. Files must NOT contain blank lines. If gzipped, filenames must end in .gz. Each file will produce output with the suffix _filt.fastq in the current working directory.')
+                        help='Fastq[.gz] files to filter. Files must NOT contain blank lines. If gzipped, filenames '
+                             'must end in .gz. Each file will produce output with the suffix _filt.fastq in the '
+                             'current working directory.')
     parser.add_argument('-k', default=None, required=True,
-                        help='Path to corresponding Kraken[.gz] output file, or other whitespace-separated text file where the second column is the read name and the third is the TaxID.')
+                        help='Path to corresponding Kraken[.gz] output file, or other whitespace-separated text file '
+                             'where the second column is the read name and the third is the TaxID.')
     parser.add_argument('-r', default='',
-                        help='NCBI TaxID(s) to retain. Use comma-separated list without spaces for multiple TaxIDs). Default is none.')
+                        help='NCBI TaxID(s) to retain. Use comma-separated list without spaces for multiple TaxIDs). '
+                             'Default is none.')
     parser.add_argument('-x', default='',
-                        help='NCBI TaxID(s) to exclude. Use comma-separated list without spaces for multiple TaxIDs). Default is none. To remove all reads marked as human set to 9606.')
+                        help='NCBI TaxID(s) to exclude. Use comma-separated list without spaces for multiple TaxIDs). '
+                             'Default is none. To remove all reads marked as human set to 9606.')
     parser.add_argument('--rT', default='',
-                        help='Text names of top-level taxa, to retain this and all taxa below it. Requires "--lineagefile". Eg. "--rT Bacteria,Viruses" to retain all bacterial and viral sequences.')
+                        help='Text names of top-level taxa, to retain this and all taxa below it. Requires '
+                             '"--lineagefile". Eg. "--rT Bacteria,Viruses" to retain all bacterial and viral '
+                             'sequences.')
     parser.add_argument('--xT', default='',
-                        help='Text names of top-level taxa, to exclude this and all taxa below it. Requires "--lineagefile". Eg. "--xT \"Homo sapiens,Fungi\"" to exclude all human and fungal sequences.')
+                        help='Text names of top-level taxa, to exclude this and all taxa below it. Requires '
+                             '"--lineagefile". Eg. "--xT \"Homo sapiens,Fungi\"" to exclude all human and fungal '
+                             'sequences.')
     parser.add_argument('--suffix', default='filt', help='Suffix to append to filtered files. Default is "filt".')
     parser.add_argument('--lineagefile', help='Path to CSV file containing lineages of all NCBI taxa.')
     _args = parser.parse_args()
@@ -94,7 +103,8 @@ def Clean_Commandline():
             taxa = dict.fromkeys(_args.rT.split(','), retain_list)
             taxa.update(dict.fromkeys(_args.xT.split(','),
                                       exclude_list))  # if same taxid in both lists, exclusion takes precedence over retention
-            if '' in taxa: del taxa['']
+            if '' in taxa:
+                del taxa['']
             cmd = 'zcat' if _args.lineagefile.endswith('.gz') else 'cat'
             handle = sp.Popen((cmd, _args.lineagefile), bufsize=8192, stdout=sp.PIPE, universal_newlines=True).stdout
             line = handle.readline()
@@ -105,11 +115,11 @@ def Clean_Commandline():
                 line = handle.readline()
     try:
         _args.x = (frozenset(_args.x.split(',')) | frozenset(exclude_list)) - frozenset([''])
-    except:
+    except ValueError:
         stoperr('TaxID(s) {0} invalid.'.format(_args.x))
     try:
         _args.r = (frozenset(_args.r.split(',')) | frozenset(retain_list)) - frozenset([''])
-    except:
+    except ValueError:
         stoperr('TaxID(s) {0} invalid.'.format(_args.r))
     if not _args.r and not _args.x:
         stoperr('Nothing to do. Exiting.')

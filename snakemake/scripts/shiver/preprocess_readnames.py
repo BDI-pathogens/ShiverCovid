@@ -1,21 +1,18 @@
-from __future__ import print_function
-
-import gzip
-import sys
+from sys import stdout, argv
 
 
-def cleanit(inpath, tag):
-    inf = gzip.open(inpath) if inpath.endswith('.gz') else open(inpath)
-    for i, l in enumerate(inf):
-        if not i % 4:
-            sys.stdout.write('{0}/{1}\n'.format(l.split()[0].rsplit('/', 1)[0], tag))
-        else:
-            sys.stdout.write(l)
-    inf.close()
+def format_file(in_file, tag):
+    with open(in_file, 'r') as f_in:
+        for count, value in enumerate(f_in):
+            if not count % 4:
+                stdout.write('{0}/{1}\n'.format(value.split()[0].rsplit('/', 1)[0], tag))
+            else:
+                stdout.write(value)
+
+
+def main():
+    format_file(argv[1], argv[2])
 
 
 if __name__ == '__main__':
-    try:
-        cleanit(sys.argv[1], sys.argv[2])
-    except:
-        sys.stderr.write('Usage: {0} /path/to/fastq[.gz] READ-SUFFIX-TO-ADD\n\n'.format(sys.argv[0]))
+    main()

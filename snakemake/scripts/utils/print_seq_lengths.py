@@ -75,8 +75,8 @@ def get_max_match_length(string, pattern):
     return max(match_lengths)
 
 
-undetermined_start_regex = "^[nN\?]+"
-undetermined_end_regex = "[nN\?]+$"
+undetermined_start_regex = r"^[nN\?]+"
+undetermined_end_regex = r"[nN\?]+$"
 
 
 def main():
