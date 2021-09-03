@@ -1,3 +1,6 @@
+[![Python 3.6 to 3.9](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/python-versions.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/python-versions.yml)
+[![Shellcheck](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/shellcheck.yml)
+
 # About
 
 The pipeline includes the following software and steps:
