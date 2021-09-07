@@ -255,7 +255,7 @@ AlignContigsToConsensus=false
 # want to run after shiver to get rid of temporary files. Changing the value to
 # true means the reads in that state don't have 'temp_' prepended to their
 # filenames - handy if you want to keep them. (By request of shiver-pro Tanya!)
-KeepPreMappingReads=false
+KeepPreMappingReads=true
 
 # Suffixes we'll append to the sample ID for output files.
 # If you change the extension (whatever follows the dot) you might break
