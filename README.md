@@ -1,4 +1,4 @@
-[![Python 3.6 to 3.9](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/python-versions.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/python-versions.yml)
+[![PEP8 Python 3.7](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/pep8.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/pep8.yml)
 [![Shellcheck](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/shellcheck.yml)
 
 # About
