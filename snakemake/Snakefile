@@ -183,16 +183,15 @@ rule pipeline_trimmomatic:
         tmp_fq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_2_trimmings.fq"))
     log: expand(LOG_DIR_PIPELINE + "/{{samples}}_trimmomatic.log")
     params:
-        trimmomatic_threads=4,
         trimmomatic_minlen=80,
         conda_bin=CONDA_BIN,
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
-        cores=1,
+        cores=4,
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {params.conda_bin} {input.filt_fwd} {input.filt_bwd} \
 {output.clean_fwd} {output.clean_bwd} {output.tmp_fq_fwd} {output.tmp_fq_bwd} {input.adapters} \
-{params.trimmomatic_threads} {params.trimmomatic_minlen} {log} >{log} 2>&1"
+{params.trimmomatic_minlen} {log} {params.cores} >{log} 2>&1"
 
 rule shiver_preprocess_readnames_fwd:
     input:

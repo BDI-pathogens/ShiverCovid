@@ -10,9 +10,9 @@ OUT_FILE_CLEANBWD="${5}"
 TMP_OUT_FILE_FQFWD="${6}"
 TMP_OUT_FILE_FQBWD="${7}"
 ADAPTERS_FILE="${8}"
-TRIMMOMATIC_THREADS="${9}"
-TRIMMOMATIC_MINLEN="${10}"
-LOG="${11}"
+TRIMMOMATIC_MINLEN="${9}"
+LOG="${10}"
+CORES="${11}"
 
 OUTPUT_FILES=(
   "${OUT_FILE_CLEANFWD}"
@@ -43,7 +43,7 @@ create_dummy_files() {
 run_trimmomatic() {
   echo "INFO: Running trimmomatic"
   set +e
-  "${CONDA_BIN}"/trimmomatic PE -threads "${TRIMMOMATIC_THREADS}" \
+  "${CONDA_BIN}"/trimmomatic PE -threads "${CORES}" \
     "${IN_FILE_FILTFWD}" "${IN_FILE_FILTBWD}" \
     "${OUT_FILE_CLEANFWD}" "${TMP_OUT_FILE_FQFWD}" \
     "${OUT_FILE_CLEANBWD}" "${TMP_OUT_FILE_FQBWD}" \
