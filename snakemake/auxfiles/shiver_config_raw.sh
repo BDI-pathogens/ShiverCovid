@@ -132,7 +132,7 @@ CleanReads=false
 
 # Which mapper to use? "smalt", "bwa" or "bowtie"? You can ignore the options
 # for a mapper you're not using, and it doesn't need to be installed.
-mapper='smalt'
+mapper='bowtie'
 
 # Check the smalt documentation for a full explanation of options,
 # including those not used by default here.
