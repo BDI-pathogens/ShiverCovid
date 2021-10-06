@@ -204,8 +204,8 @@ rule pipeline_preprocess_readnames_bwd:
 
 rule pipeline_trimmomatic:
     input:
-        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_reads1.fastq"),
-        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_reads2.fastq"),
+        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_reads1.fastq"),
+        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_reads2.fastq"),
         adapters=ADAPTERS_FILE,
         script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","trimmomatic.sh")
     output:
