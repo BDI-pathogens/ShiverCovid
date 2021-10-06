@@ -110,7 +110,7 @@ ContigMinBlastOverlapToMerge='2'
 MafftTestingStrategy="MinAlnLength"
 
 # Shall we trim adapaters and low quality bases from reads, using trimmomatic?
-TrimReadsForAdaptersAndQual=true
+TrimReadsForAdaptersAndQual=false
 # The trimmomatic manual explains at length the parameters controlling read
 # trimming; the reader is referred to it for explanations of the following
 # variables and other options not used here:
@@ -121,7 +121,8 @@ BaseQualityParams='MINLEN:50 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:20'
 NumThreadsTrimmomatic=1
 
 # Shall we trim exact matches to PCR primers from the end of reads using fastaq?
-TrimReadsForPrimers=true
+# TODO: What should this be?
+TrimReadsForPrimers=false
 # Shall we also trim matches to the PCR primers that differ by a single base
 # change? (This slows down the trimming step a lot.)
 TrimPrimerWithOneSNP=false

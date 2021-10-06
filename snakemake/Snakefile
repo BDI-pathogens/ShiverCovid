@@ -170,10 +170,42 @@ rule pipeline_kraken_gzip:
     shell:
         "gzip {input.kraken}"
 
-rule pipeline_trimmomatic:
+rule pipeline_preprocess_readnames_fwd:
     input:
         filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames_fwd.sh"),
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames.py")
+    output:
+        tmp_reads_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_reads1.fastq"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_preprocess_readnames_fwd.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.py_script} {params.conda_bin} {input.filt_fwd} {output.tmp_reads_fwd} {log} >{log} 2>&1"
+
+rule pipeline_preprocess_readnames_bwd:
+    input:
         filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames_bwd.sh"),
+        py_script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames.py")
+    output:
+        tmp_reads_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_reads2.fastq"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_preprocess_readnames_bwd.log")
+    params:
+        conda_bin=CONDA_BIN,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
+        project=CLUSTER_PROJECT_NAME
+    shell:
+        "{input.script} {input.py_script} {params.conda_bin} {input.filt_bwd} {output.tmp_reads_bwd} {log} >{log} 2>&1"
+
+rule pipeline_trimmomatic:
+    input:
+        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_reads1.fastq"),
+        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_reads2.fastq"),
         adapters=ADAPTERS_FILE,
         script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","trimmomatic.sh")
     output:
@@ -183,7 +215,7 @@ rule pipeline_trimmomatic:
         tmp_fq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_2_trimmings.fq"))
     log: expand(LOG_DIR_PIPELINE + "/{{samples}}_trimmomatic.log")
     params:
-        trimmomatic_minlen=80,
+        trimmomatic_minlen=50,
         conda_bin=CONDA_BIN,
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
         cores=4,
@@ -193,44 +225,10 @@ rule pipeline_trimmomatic:
 {output.clean_fwd} {output.clean_bwd} {output.tmp_fq_fwd} {output.tmp_fq_bwd} {input.adapters} \
 {params.trimmomatic_minlen} {log} {params.cores} >{log} 2>&1"
 
-rule shiver_preprocess_readnames_fwd:
-    input:
-        filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
-        script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames_fwd.sh"),
-        py_script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames.py")
-    output:
-        tmp_reads_fwd=temp(expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads1.fastq"))
-    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_fwd.log")
-    params:
-        conda_bin=CONDA_BIN,
-        queues=CLUSTER_CONFIG_SHORT_QUEUES,
-        cores=1,
-        project=CLUSTER_PROJECT_NAME
-    shell:
-        "{input.script} {input.py_script} {params.conda_bin} {input.filt_fwd} {output.tmp_reads_fwd} {log} >{log} 2>&1"
-
-rule shiver_preprocess_readnames_bwd:
-    input:
-        filt_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_filt.fastq"),
-        script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames_bwd.sh"),
-        py_script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","preprocess_readnames.py")
-    output:
-        tmp_reads_bwd=temp(expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads2.fastq"))
-    log: expand(LOG_DIR_SHIVER_RAW + "/{{samples}}_preprocess_readnames_bwd.log")
-    params:
-        conda_bin=CONDA_BIN,
-        queues=CLUSTER_CONFIG_SHORT_QUEUES,
-        cores=1,
-        project=CLUSTER_PROJECT_NAME
-    shell:
-        "{input.script} {input.py_script} {params.conda_bin} {input.filt_bwd} {output.tmp_reads_bwd} {log} >{log} 2>&1"
-
 rule shiver_map_reads:
     input:
         clean_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_clean.fastq"),
         clean_bwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2_clean.fastq"),
-        tmp_reads_fwd=expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads1.fastq"),
-        tmp_reads_bwd=expand(OUTPUT_DIR_SHIVER_RAW + "/temp_{{samples}}_reads2.fastq"),
         shiver_config=RAW_SHIVER_CONFIG,
         ref_stem=REF_STEM_FILE,
         script=join(REPO_BASE_DIR,"snakemake","scripts","shiver","run_shiver_map_reads.sh"),
@@ -265,7 +263,7 @@ rule shiver_map_reads:
     shell:
         "{input.script} {params.sequence} {params.shiver_initdir} {input.shiver_config} \
 {input.shiver_script} {params.tmp_dir_sequence} {input.clean_fwd} {input.clean_bwd} \
-{input.tmp_reads_fwd} {input.tmp_reads_bwd} {output.tmp_bam} {output.tmp_base_freqs} {output.tmp_base_freqs_glob} \
+{output.tmp_bam} {output.tmp_base_freqs} {output.tmp_base_freqs_glob} \
 {output.tmp_dedup_stats} {output.tmp_insert_size} {output.tmp_prededup} {output.tmp_consensus} \
 {output.tmp_consensus_glob} {output.tmp_coords} {output.tmp_ref_fasta} {output.tmp_ref_fasta_fai} {output.tmp_blast} \
 {output.tmp_shiver_contigs} {input.ref_stem} {log} >{log} 2>&1"
