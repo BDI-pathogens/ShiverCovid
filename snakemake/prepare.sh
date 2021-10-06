@@ -8,12 +8,10 @@ CONFIG_PREFIX_FILE="_config.yaml"
 PROCESSING_DIR="$(dirname "$(dirname "$(pwd)")")"
 PLATE_ID="$(basename "${PROCESSING_DIR}")"
 
-SAMPLES_FILE="${RAW_DATA_DIR}/samples.txt"
-SAMPLES_FILE_LOCAL="${PROCESSING_DIR}/samples.txt"
+SAMPLES_FILE="${PROCESSING_DIR}/samples.txt"
 
 OUT_FILES=(
   "${CONFIG_FILE}"
-  "${SAMPLES_FILE_LOCAL}"
 )
 
 usage() {
@@ -47,7 +45,9 @@ create_config() {
   echo "SAMPLES:"
 
   while IFS= read -r line; do
-    echo "    - ${line}"
+    if [[ -n ${line} ]]; then
+      echo "    - ${line}"
+    fi
   done <"${SAMPLES_FILE}"
 } >>${CONFIG_FILE}
 
@@ -59,5 +59,3 @@ check_file_exists "${SAMPLES_FILE}"
 cleanup_out_files
 echo "INFO: Creating ${CONFIG_FILE}"
 create_config "${RAW_DATA_DIR}"
-echo "INFO: Copying ${SAMPLES_FILE} to ${PROCESSING_DIR}"
-cp "${SAMPLES_FILE}" "${PROCESSING_DIR}"
