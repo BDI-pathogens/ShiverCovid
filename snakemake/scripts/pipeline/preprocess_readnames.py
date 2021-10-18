@@ -1,4 +1,5 @@
-from sys import stdout, argv
+import os
+import sys
 
 
 def format_file(in_file, tag):
@@ -6,9 +7,9 @@ def format_file(in_file, tag):
         with open(in_file, 'r') as f_in:
             for count, value in enumerate(f_in):
                 if not count % 4:
-                    stdout.write('{0}/{1}\n'.format(value.split()[0].rsplit('/', 1)[0], tag))
+                    sys.stdout.write('{0}/{1}\n'.format(value.split()[0].rsplit('/', 1)[0], tag))
                 else:
-                    stdout.write(value)
+                    sys.stdout.write(value)
         # https://docs.python.org/3/library/signal.html#note-on-sigpipe
         # flush output here to force SIGPIPE to be triggered
         # while inside this try block.
@@ -22,7 +23,7 @@ def format_file(in_file, tag):
 
 
 def main():
-    format_file(argv[1], argv[2])
+    format_file(sys.argv[1], sys.argv[2])
 
 
 if __name__ == '__main__':
