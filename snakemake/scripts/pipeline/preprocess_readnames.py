@@ -16,12 +16,12 @@ def format_file(in_file, tag):
         # while inside this try block.
         sys.stdout.flush()
     except BrokenPipeError:
-        logging.error('BrokenPipeError. Exiting...')
         # Python flushes standard streams on exit; redirect remaining output
         # to devnull to avoid another BrokenPipeError at shutdown
         devnull = os.open(os.devnull, os.O_WRONLY)
         os.dup2(devnull, sys.stdout.fileno())
-        sys.exit(1)  # Python exits with error code 1 on EPIPE
+        logging.debug('Catching BrokenPipeError')
+        sys.exit(0)  # Exit successfully. This can happen when enough data passed downstream
 
 
 def main():
