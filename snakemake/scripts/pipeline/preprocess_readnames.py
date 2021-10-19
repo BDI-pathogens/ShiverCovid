@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -15,6 +16,7 @@ def format_file(in_file, tag):
         # while inside this try block.
         sys.stdout.flush()
     except BrokenPipeError:
+        logging.error('BrokenPipeError. Exiting...')
         # Python flushes standard streams on exit; redirect remaining output
         # to devnull to avoid another BrokenPipeError at shutdown
         devnull = os.open(os.devnull, os.O_WRONLY)
