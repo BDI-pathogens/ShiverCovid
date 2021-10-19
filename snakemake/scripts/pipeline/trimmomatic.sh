@@ -47,7 +47,7 @@ run_trimmomatic() {
     "${IN_FILE_FILTFWD}" "${IN_FILE_FILTBWD}" \
     "${OUT_FILE_CLEANFWD}" "${TMP_OUT_FILE_FQFWD}" \
     "${OUT_FILE_CLEANBWD}" "${TMP_OUT_FILE_FQBWD}" \
-    ILLUMINACLIP:"${ADAPTERS_FILE}":2:10:7:1:true MINLEN:"${TRIMMOMATIC_MINLEN}"
+    ILLUMINACLIP:"${ADAPTERS_FILE}":2:10:7:1:true MINLEN:"${TRIMMOMATIC_MINLEN}" LEADING:20 TRAILING:20 SLIDINGWINDOW:4:20
   retVal=$?
   echo "INFO: trimmomatic return value: ${retVal}"
   set -e
