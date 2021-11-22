@@ -1,5 +1,7 @@
 from os import getcwd
 from os.path import join, dirname
+import sys
+import logging
 
 
 def remove_trailing_slash(dir_string):
@@ -8,9 +10,18 @@ def remove_trailing_slash(dir_string):
     return dir_string
 
 
+def check_config(config_name, valid_value_list):
+    config_value = config[config_name]
+    if config_value not in valid_value_list:
+        logging.error(f"{config_name} config '{config_value}' not valid. Options are: {valid_value_list}. Exiting...")
+        sys.exit(1)
+    return config_value
+
+
 # General config
 REPO_BASE_DIR = dirname(getcwd())
 PROCESSING_DIR = dirname(REPO_BASE_DIR)
+SMARTER_ADAPTER_KIT = check_config("SMARTER_ADAPTER_KIT", ['v2', 'v3'])
 RAW_DATA_DIR = remove_trailing_slash(config["RAW_DATA_DIR"])
 SAMPLES = config["SAMPLES"]
 PLATE_ID = config["PLATE_ID"]
@@ -23,6 +34,7 @@ ADAPTERS_FILE = join(REPO_BASE_DIR,"snakemake","auxfiles",config["ADAPTERS_FILE"
 REF_STEM_FILE = join(REPO_BASE_DIR,"snakemake","auxfiles",config["REF_STEM_FILE"])
 
 # Shiver config
+SHIVER_MAPPER = check_config("SHIVER_MAPPER", ['smalt', 'bwa', 'bowtie'])
 SHIVER_INIT_DIR = join(REPO_BASE_DIR,"snakemake","auxfiles",config["SHIVER_INIT_DIR"])
 RAW_SHIVER_CONFIG = join(REPO_BASE_DIR,"snakemake","auxfiles",config["RAW_SHIVER_CONFIG"])
 RAW_MINCOV_RELAXED_STR = str(config["RAW_MINCOV_RELAXED"])
@@ -48,6 +60,7 @@ OUTPUT_DIR_PREFIX_SHIVER_MAP = join(PROCESSING_DIR,"shiver-map-reads-")
 
 # Log dirs
 LOG_DIR = "logs"
+LOG_DIR_PROCESSING = join(PROCESSING_DIR,LOG_DIR)
 LOG_DIR_PIPELINE = join(OUTPUT_DIR_PIPELINE,LOG_DIR)
 LOG_DIR_SHIVER_RAW = join(OUTPUT_DIR_SHIVER_RAW,LOG_DIR)
 LOG_DIR_SHIVER_BASEFREQS = join(OUTPUT_DIR_SHIVER_BASEFREQS,LOG_DIR)
@@ -58,6 +71,7 @@ LOG_DIR_PANGOLIN = join(OUTPUT_DIR_PANGOLIN,LOG_DIR)
 
 rule all:
     input:
+        git_info=join(PROCESSING_DIR + "/git_repo_info.yaml"),
         pipeline_kraken_gzip=expand(OUTPUT_DIR_PIPELINE + "/{samples}.kraken.gz",samples=SAMPLES),
         shiver_samtools_index=expand(OUTPUT_DIR_SHIVER_RAW + "/{samples}.bam.bai",samples=SAMPLES),
         shiver_cleanup=expand(LOG_DIR_SHIVER_RAW + "/{samples}_shiver_cleanup.complete",samples=SAMPLES),
@@ -77,23 +91,40 @@ rule all:
         gzip_filt1=expand(OUTPUT_DIR_PIPELINE + "/{samples}_1_filt.fastq.gz",samples=SAMPLES),
         gzip_filt2=expand(OUTPUT_DIR_PIPELINE + "/{samples}_2_filt.fastq.gz",samples=SAMPLES)
 
-rule pipeline_decompress:
+rule record_git_repo_info:
     input:
-        gzrawfastq_fwd=expand(RAW_DATA_DIR + "/{{samples}}_1.fastq.gz"),
-        gzrawfastq_bwd=expand(RAW_DATA_DIR + "/{{samples}}_2.fastq.gz"),
-        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","decompress.sh")
+        gzrawfastq_fwds=expand(RAW_DATA_DIR + "/{samples}_1.fastq.gz",samples=SAMPLES),
+        gzrawfastq_bwds=expand(RAW_DATA_DIR + "/{samples}_2.fastq.gz",samples=SAMPLES),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","utils","record_git_repo_info.sh")
     output:
-        rawfastq_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq")),
-        rawfastq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"))
-    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_decompress.log")
+        git_info=join(PROCESSING_DIR + "/git_repo_info.yaml")
+    log: join(LOG_DIR_PROCESSING,"record_git_repo_info.log")
     params:
         conda_bin=CONDA_BIN,
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
         cores=1,
         project=CLUSTER_PROJECT_NAME
     shell:
+        "{input.script} {params.conda_bin} {output.git_info} {log} >{log} 2>&1"
+
+rule pipeline_decompress_and_trim_adapter:
+    input:
+        gzrawfastq_fwd=expand(RAW_DATA_DIR + "/{{samples}}_1.fastq.gz"),
+        gzrawfastq_bwd=expand(RAW_DATA_DIR + "/{{samples}}_2.fastq.gz"),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","decompress_and_trim_adapter.sh")
+    output:
+        rawfastq_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1.fastq")),
+        rawfastq_bwd=temp(expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_2.fastq"))
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_decompress_and_trim_adapter.log")
+    params:
+        smarter_adapter_kit=SMARTER_ADAPTER_KIT,
+        conda_bin=CONDA_BIN,
+        queues=CLUSTER_CONFIG_SHORT_QUEUES,
+        cores=1,
+        project=CLUSTER_PROJECT_NAME
+    shell:
         "{input.script} {input.gzrawfastq_fwd} {input.gzrawfastq_bwd} {output.rawfastq_fwd} {output.rawfastq_bwd} \
-{log} >{log} 2>&1"
+{log} {params.smarter_adapter_kit} >{log} 2>&1"
 
 rule pipeline_gc:
     input:
@@ -170,14 +201,14 @@ rule pipeline_kraken_gzip:
     shell:
         "gzip {input.kraken}"
 
-rule pipeline_preprocess_readnames_fwd:
+rule pipeline_preprocess_readnames_and_hexamer_trim_fwd:
     input:
         filt_fwd=expand(OUTPUT_DIR_PIPELINE + "/{{samples}}_1_filt.fastq"),
-        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames_fwd.sh"),
+        script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames_and_hexamer_trim_fwd.sh"),
         py_script=join(REPO_BASE_DIR,"snakemake","scripts","pipeline","preprocess_readnames.py")
     output:
         tmp_reads_fwd=temp(expand(OUTPUT_DIR_PIPELINE + "/temp_{{samples}}_reads1.fastq"))
-    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_preprocess_readnames_fwd.log")
+    log: expand(LOG_DIR_PIPELINE + "/{{samples}}_preprocess_readnames_and_hexamer_trim_fwd.log")
     params:
         conda_bin=CONDA_BIN,
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
@@ -530,6 +561,8 @@ rule qc:
         csv=expand(OUTPUT_DIR_QC + "/qc_{{samples}}.csv")
     log: expand(LOG_DIR_QC + "/{{samples}}_qc.log")
     params:
+        smarter_adapter_kit=SMARTER_ADAPTER_KIT,
+        shiver_mapper=SHIVER_MAPPER,
         # Placeholder - name TBC. May not exist, so not defined as input. Space separated file expected
         vl_file=join(REPO_BASE_DIR,"vl.txt"),
         sequence=expand("{{samples}}"),
@@ -540,7 +573,7 @@ rule qc:
         project=CLUSTER_PROJECT_NAME
     shell:
         "{input.script} {input.script_iz} {input.script_seq_len} \
-{params.sequence} {params.processing_dir} {params.conda_bin} \
+{params.smarter_adapter_kit} {params.shiver_mapper} {params.sequence} {params.processing_dir} {params.conda_bin} \
 {input.rawfastq_fwd} {input.gc} {input.kraken_report} {input.bam} {input.bam_pre_dedup} {input.insert_size}  \
 {input.dedup_stats} {input.consensus_raw} {input.consensus_basefreqs_run1} {input.consensus_basefreqs_run2} \
 {params.vl_file} {output.csv} {log} >{log} 2>&1"
