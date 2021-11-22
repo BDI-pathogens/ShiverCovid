@@ -6,10 +6,10 @@ set -eu -o pipefail
 CONFIG_FILE="../ShiverCovid/snakemake/config.yaml" # Relative to OUTPUT_DIR_PREFIX_SHIVER_MAP (set in Snakefile)
 CONDA_BIN=$(grep "CONDA_BIN" <"${CONFIG_FILE}" | sed -e "s/CONDA_BIN: //" | cut -f1 -d" ")
 SHIVER_MAPPER=$(grep "SHIVER_MAPPER" <"${CONFIG_FILE}" | sed -e "s/SHIVER_MAPPER: //" | cut -f1 -d" ")
-MINCOV_RELAXED=$(grep "MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/MINCOV_RELAXED: //" | cut -f1 -d" ")
-MINCOV_STRICT=$(grep "MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/MINCOV_STRICT: //" | cut -f1 -d" ")
+RAW_MINCOV_RELAXED=$(grep "RAW_MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_RELAXED: //" | cut -f1 -d" ")
+RAW_MINCOV_STRICT=$(grep "RAW_MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_STRICT: //" | cut -f1 -d" ")
 MINCONTIG_LENGTH=$(grep "MINCONTIG_LENGTH" <"${CONFIG_FILE}" | sed -e "s/MINCONTIG_LENGTH: //" | cut -f1 -d" ")
-CONFIG_VARS=("${CONDA_BIN}" "${SHIVER_MAPPER}" "${MINCOV_RELAXED}" "${MINCOV_STRICT}" "${MINCONTIG_LENGTH}")
+CONFIG_VARS=("${CONDA_BIN}" "${SHIVER_MAPPER}" "${RAW_MINCOV_RELAXED}" "${RAW_MINCOV_STRICT}" "${MINCONTIG_LENGTH}")
 
 for config_var in "${CONFIG_VARS[@]}"; do
   if [[ -z "${config_var}" ]]; then
@@ -20,8 +20,8 @@ done
 
 echo "CONDA_BIN is set to '${CONDA_BIN}'"
 echo "SHIVER_MAPPER is set to '${SHIVER_MAPPER}'"
-echo "MINCOV_RELAXED is set to '${MINCOV_RELAXED}'"
-echo "MINCOV_STRICT is set to '${MINCOV_STRICT}'"
+echo "RAW_MINCOV_RELAXED is set to '${RAW_MINCOV_RELAXED}'"
+echo "RAW_MINCOV_STRICT is set to '${RAW_MINCOV_STRICT}'"
 echo "MINCONTIG_LENGTH is set to '${MINCONTIG_LENGTH}'"
 
 ################################################################################
