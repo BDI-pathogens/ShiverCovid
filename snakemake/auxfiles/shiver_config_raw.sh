@@ -8,8 +8,7 @@ CONDA_BIN=$(grep "CONDA_BIN" <"${CONFIG_FILE}" | sed -e "s/CONDA_BIN: //" | cut 
 SHIVER_MAPPER=$(grep "SHIVER_MAPPER" <"${CONFIG_FILE}" | sed -e "s/SHIVER_MAPPER: //" | cut -f1 -d" ")
 RAW_MINCOV_RELAXED=$(grep "RAW_MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_RELAXED: //" | cut -f1 -d" ")
 RAW_MINCOV_STRICT=$(grep "RAW_MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_STRICT: //" | cut -f1 -d" ")
-MINCONTIG_LENGTH=$(grep "MINCONTIG_LENGTH" <"${CONFIG_FILE}" | sed -e "s/MINCONTIG_LENGTH: //" | cut -f1 -d" ")
-CONFIG_VARS=("${CONDA_BIN}" "${SHIVER_MAPPER}" "${RAW_MINCOV_RELAXED}" "${RAW_MINCOV_STRICT}" "${MINCONTIG_LENGTH}")
+CONFIG_VARS=("${CONDA_BIN}" "${SHIVER_MAPPER}" "${RAW_MINCOV_RELAXED}" "${RAW_MINCOV_STRICT}")
 
 for config_var in "${CONFIG_VARS[@]}"; do
   if [[ -z "${config_var}" ]]; then
@@ -22,7 +21,6 @@ echo "CONDA_BIN is set to '${CONDA_BIN}'"
 echo "SHIVER_MAPPER is set to '${SHIVER_MAPPER}'"
 echo "RAW_MINCOV_RELAXED is set to '${RAW_MINCOV_RELAXED}'"
 echo "RAW_MINCOV_STRICT is set to '${RAW_MINCOV_STRICT}'"
-echo "MINCONTIG_LENGTH is set to '${MINCONTIG_LENGTH}'"
 
 ################################################################################
 
