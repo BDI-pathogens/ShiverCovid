@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 OUT_FILE="${1}"
 RAW_MINCOV_RELAXED="${2}"
@@ -17,6 +17,8 @@ TEMP_OUT_FILE="${OUT_FILE}.tmp"
 
 header() {
   echo "plateid,\
+smarter_adapter_kit,\
+mapper,\
 seqname,\
 samplename,\
 treatment,\
