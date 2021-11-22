@@ -108,7 +108,9 @@ get_nreads() {
 
 get_nhuman_reads() {
   echo "INFO: Get number of human reads" >>"${LOG}"
+  set +e
   nhuman=$(grep -m1 'Homo sapiens' "${IN_FILE_KRAKEN_REPORT}" | cut -f2)
+  set -e
   echo -n "${nhuman}," >>"${OUT_FILE}"
   echo "DEBUG: ${nhuman}," >>"${LOG}"
 }
@@ -144,7 +146,9 @@ get_mapped_positive() {
 
 get_duprate() {
   echo "INFO: Get duprate" >>"${LOG}"
+  set +e
   duprate=$(grep -h -m1 ^"Unknown Library" "${IN_FILE_DEDUP_STATS}" | cut -f9)
+  set -e
   echo -n "${duprate}," >>"${OUT_FILE}"
   echo "DEBUG: ${duprate}," >>"${LOG}"
 }
