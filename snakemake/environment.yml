@@ -12,6 +12,7 @@ dependencies:
   - bwa=0.7.17
   - cd-hit=4.8.1
   - fastq-tools=0.8
+  - git=2.23.0
   - iqtree=2.0.3
   - kallisto=0.46.0
   - kraken2=2.0.8_beta

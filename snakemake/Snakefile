@@ -97,7 +97,7 @@ rule record_git_repo_info:
         gzrawfastq_bwds=expand(RAW_DATA_DIR + "/{samples}_2.fastq.gz",samples=SAMPLES),
         script=join(REPO_BASE_DIR,"snakemake","scripts","utils","record_git_repo_info.sh")
     output:
-        git_info=join(PROCESSING_DIR + "/git_repo_info.yaml")
+        git_info=join(PROCESSING_DIR, "git_repo_info.yaml")
     log: join(LOG_DIR_PROCESSING,"record_git_repo_info.log")
     params:
         conda_bin=CONDA_BIN,
