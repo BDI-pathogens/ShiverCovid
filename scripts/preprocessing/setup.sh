@@ -15,10 +15,6 @@ usage() {
   exit 1
 }
 
-check_input() {
-  [[ -z ${RAW_DATA_DIR} || -z ${SMARTER_ADAPTER_KIT} ]] && { usage; }
-}
-
 update_pangolin() {
   "${SCRIPT_UPDATE_PANGOLIN}"
   retVal=$?
@@ -37,7 +33,7 @@ function error() {
   fi
 }
 
-check_input
+[[ -z ${RAW_DATA_DIR} || -z ${SMARTER_ADAPTER_KIT} ]] && { usage; }
 {
   trap 'error $?' EXIT
   msg="INFO: Raw Data Directory: ${RAW_DATA_DIR}"
