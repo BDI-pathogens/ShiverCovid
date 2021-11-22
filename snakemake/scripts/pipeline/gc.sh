@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 SCRIPT="${1}"
 CONDA_BIN="${2}"

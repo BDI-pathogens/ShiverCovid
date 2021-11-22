@@ -3,6 +3,7 @@
 set -e
 
 RAW_DATA_DIR="${1}"
+SMARTER_ADAPTER_KIT="${2}"
 CONFIG_FILE="config.yaml"
 CONFIG_PREFIX_FILE="_config.yaml"
 PROCESSING_DIR="$(dirname "$(dirname "$(pwd)")")"
@@ -15,7 +16,9 @@ OUT_FILES=(
 )
 
 usage() {
-  echo "Usage: $0 RAW_DATA_DIR"
+  echo "Usage: $0 RAW_DATA_DIR SMARTER_ADAPTER_KIT"
+  echo "* RAW_DATA_DIR: The directory containing the raw data"
+  echo "* SMARTER_ADAPTER_KIT: The SMARTer Adapter kit used by the lab [v2, v3]"
   exit 1
 }
 
@@ -35,12 +38,13 @@ cleanup_out_files() {
 }
 
 create_config() {
-  raw_data_dir="${1}"
   cat ${CONFIG_PREFIX_FILE}
   echo ""
   echo "PLATE_ID: ${PLATE_ID}"
   echo ""
-  echo "RAW_DATA_DIR: ${raw_data_dir}"
+  echo "RAW_DATA_DIR: ${RAW_DATA_DIR}"
+  echo ""
+  echo "SMARTER_ADAPTER_KIT: ${SMARTER_ADAPTER_KIT}"
   echo ""
   echo "SAMPLES:"
 
@@ -52,10 +56,10 @@ create_config() {
 } >>${CONFIG_FILE}
 
 # Checks
-[[ -z ${RAW_DATA_DIR} ]] && { usage; }
+[[ -z ${RAW_DATA_DIR} || -z ${SMARTER_ADAPTER_KIT} ]] && { usage; }
 check_file_exists "${SAMPLES_FILE}"
 
 # Prepare files
 cleanup_out_files
 echo "INFO: Creating ${CONFIG_FILE}"
-create_config "${RAW_DATA_DIR}"
+create_config

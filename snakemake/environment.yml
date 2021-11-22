@@ -6,21 +6,21 @@ channels:
   - defaults
   - kantorlab
 dependencies:
-  - biopython=1.78=py37h7b6447c_0
-  - blast=2.9.0=pl526h3066fca_4
-  - bowtie2=2.3.5.1=py37h6bb024c_0
-  - bwa=0.7.17=hed695b0_7
-  - cd-hit=4.8.1=h8b12597_3
-  - fastq-tools=0.8=ha92aebf_2
-  - iqtree=2.0.3=h176a8bc_1
-  - kallisto=0.46.0=hb6a4e58_0
-  - kraken2=2.0.8_beta=pl526hc9558a2_2
-  - mafft=7.455=h516909a_0
-  - pandas=1.1.3=py37he6710b0_0
-  - picard=2.18.29=0
-  - pip=20.2.4=py37h06a4308_0
+  - biopython=1.78
+  - blast=2.9.0
+  - bowtie2=2.3.5.1
+  - bwa=0.7.17
+  - cd-hit=4.8.1
+  - fastq-tools=0.8
+  - iqtree=2.0.3
+  - kallisto=0.46.0
+  - kraken2=2.0.8_beta
+  - mafft=7.455
+  - pandas=1.1.3
+  - picard=2.18.29
+  - pip=20.2.4
   - pyfastaq=3.17.0=py_2
-  - python=3.7.6=h0371630_2
-  - samtools=1.9=h10a08f8_12
-  - smalt=0.7.6=1
-  - trimmomatic=0.39=1
+  - python=3.7.6
+  - samtools=1.9
+  - smalt=0.7.6
+  - trimmomatic=0.39

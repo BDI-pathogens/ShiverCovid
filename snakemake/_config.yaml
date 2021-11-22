@@ -1,14 +1,15 @@
-COMPLETION_FLAG_DIR: "<to_be_completed>"
-CONDA_BIN: "<to_be_completed>"  # The bin directory of conda env shivercovid
-SHIVER_INSTALL: "<to_be_completed>"
-KRAKEN2_HIV_DB: "<to_be_completed>"
+COMPLETION_FLAG_DIR: <to_be_completed>
+CONDA_BIN: <to_be_completed>  # The bin directory of conda env shivercovid
+SHIVER_INSTALL: <to_be_completed>
+KRAKEN2_HIV_DB: <to_be_completed>
 
-ADAPTERS_FILE: "adapters-all.fasta"
-LINEAGE_FILE: "lineages-20200622.csv.gz"  # Note: Max one "-" in the filename
-REF_STEM_FILE: "NC_045512.2_SARS_CoV2_Wuhan.fasta"
+ADAPTERS_FILE: adapters-all.fasta
+LINEAGE_FILE: lineages-20200622.csv.gz  # Note: Max one "-" in the filename
+REF_STEM_FILE: NC_045512.2_SARS_CoV2_Wuhan.fasta
 
-SHIVER_INIT_DIR: "ShiverInitDir"
-RAW_SHIVER_CONFIG: "shiver_config_raw.sh"
+SHIVER_MAPPER: bowtie  # smalt, bwa or bowtie
+SHIVER_INIT_DIR: ShiverInitDir
+RAW_SHIVER_CONFIG: shiver_config_raw.sh
 RAW_MINCOV_RELAXED: 2
 RAW_MINCOV_STRICT: 5
 
@@ -17,6 +18,6 @@ BASEFREQS_MINCOV_STRICT_RUN1: 100
 BASEFREQS_MINCOV_RELAXED_RUN2: 10
 BASEFREQS_MINCOV_STRICT_RUN2: 50
 
-CLUSTER_PROJECT_NAME: "<to_be_completed>"
-CLUSTER_CONFIG_SHORT_QUEUES: "<to_be_completed>"  # Comma separated list
-CLUSTER_CONFIG_LONG_QUEUES: "<to_be_completed>"  # Comma separated list
+CLUSTER_PROJECT_NAME: <to_be_completed>
+CLUSTER_CONFIG_SHORT_QUEUES: <to_be_completed>  # Comma separated list
+CLUSTER_CONFIG_LONG_QUEUES: <to_be_completed>  # Comma separated list

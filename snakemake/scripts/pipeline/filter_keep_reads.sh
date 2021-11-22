@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 SCRIPT="${1}"
 CONDA_BIN="${2}"
-IN_FILE_FASTQFWD="${3}"
-IN_FILE_FASTQBWD="${4}"
+IN_FILE_FASTQ_FWD="${3}"
+IN_FILE_FASTQ_BWD="${4}"
 IN_FILE_KRAKEN="${5}"
-OUT_FILE_FILTFWD="${6}"
-OUT_FILE_FILTBWD="${7}"
+OUT_FILE_FILT_FWD="${6}"
+OUT_FILE_FILT_BWD="${7}"
 OUTPUT_DIR_PIPELINE="${8}"
 LINEAGE_FILE="${9}"
 LOG="${10}"
 
 OUTPUT_FILES=(
-  "${OUT_FILE_FILTFWD}"
-  "${OUT_FILE_FILTBWD}"
+  "${OUT_FILE_FILT_FWD}"
+  "${OUT_FILE_FILT_BWD}"
 )
 
 check_infile() {
@@ -59,18 +59,18 @@ filter() {
   # Creates ${SEQUENCE}_[12]_filt.fastq
   cd "${OUTPUT_DIR_PIPELINE}"
   echo "INFO: Run ${SCRIPT}"
-  echo "DEBUG: ${CONDA_BIN}/python ${SCRIPT} -i ${IN_FILE_FASTQFWD} ${IN_FILE_FASTQBWD} -k ${IN_FILE_KRAKEN} \
+  echo "DEBUG: ${CONDA_BIN}/python ${SCRIPT} -i ${IN_FILE_FASTQ_FWD} ${IN_FILE_FASTQ_BWD} -k ${IN_FILE_KRAKEN} \
 --xT Homo,Bacteria,Fungi -x 1969841 --suffix filt --lineagefile ${LINEAGE_FILE}"
 
-  "${CONDA_BIN}"/python "${SCRIPT}" -i "${IN_FILE_FASTQFWD}" "${IN_FILE_FASTQBWD}" -k "${IN_FILE_KRAKEN}" \
+  "${CONDA_BIN}"/python "${SCRIPT}" -i "${IN_FILE_FASTQ_FWD}" "${IN_FILE_FASTQ_BWD}" -k "${IN_FILE_KRAKEN}" \
     --xT Homo,Bacteria,Fungi -x 1969841 --suffix filt --lineagefile "${LINEAGE_FILE}"
 
 }
 
 {
-  check_infile "${IN_FILE_FASTQFWD}"
+  check_infile "${IN_FILE_FASTQ_FWD}"
   filter
   retVal=$?
   check_return ${retVal}
-  check_for_reads "${OUT_FILE_FILTFWD}"
+  check_for_reads "${OUT_FILE_FILT_FWD}"
 } >"${LOG}" 2>&1

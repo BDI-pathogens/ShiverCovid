@@ -1,25 +1,27 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 SCRIPT_IZ="${1}"
 SCRIPT_SEQ_LEN="${2}"
-SEQUENCE="${3}"
-PROCESSING_DIR="${4}"
-CONDA_BIN="${5}"
-IN_FILE_RAWFASTQFWD="${6}"
-IN_FILE_GC_FILE="${7}"
-IN_FILE_KRAKEN_REPORT="${8}"
-IN_FILE_BAM="${9}"
-IN_FILE_PREDEPUP_BAM="${10}"
-IN_FILE_INSERT_SIZE_FILE="${11}"
-IN_FILE_DEDUP_STATS="${12}"
-IN_FILE_CONSENSUS_RAW="${13}"
-IN_FILE_CONSENSUS_BASEFREQS_RUN1="${14}"
-IN_FILE_CONSENSUS_BASEFREQS_RUN2="${15}"
-IN_FILE_VL="${16}"
-OUT_FILE="${17}"
-LOG="${18}"
+SMARTER_ADAPTER_KIT="${3}"
+SHIVER_MAPPER="${4}"
+SEQUENCE="${5}"
+PROCESSING_DIR="${6}"
+CONDA_BIN="${7}"
+IN_FILE_RAWFASTQFWD="${8}"
+IN_FILE_GC_FILE="${9}"
+IN_FILE_KRAKEN_REPORT="${10}"
+IN_FILE_BAM="${11}"
+IN_FILE_PREDEPUP_BAM="${12}"
+IN_FILE_INSERT_SIZE_FILE="${13}"
+IN_FILE_DEDUP_STATS="${14}"
+IN_FILE_CONSENSUS_RAW="${15}"
+IN_FILE_CONSENSUS_BASEFREQS_RUN1="${16}"
+IN_FILE_CONSENSUS_BASEFREQS_RUN2="${17}"
+IN_FILE_VL="${18}"
+OUT_FILE="${19}"
+LOG="${20}"
 
 REF_NAME="NC_045512.2"
 
@@ -43,10 +45,12 @@ qc() {
 get_meta_data() {
   echo "INFO: Get metadata" >>"${LOG}"
   plate_id="$(basename "${PROCESSING_DIR}")"
+  smarter_adapter_kit="${SMARTER_ADAPTER_KIT}"
+  mapper="${SHIVER_MAPPER}"
   samplename="$(cut -d'_' -f1 <<<"${SEQUENCE}")"
   treatment="$(cut -d'_' -f2 <<<"${SEQUENCE}")"
-  echo -n "${plate_id},${SEQUENCE},${samplename},${treatment}," >>"${OUT_FILE}"
-  echo "DEBUG: ${plate_id},${SEQUENCE},${samplename},${treatment}," >>"${LOG}"
+  echo -n "${plate_id},${smarter_adapter_kit},${mapper},${SEQUENCE},${samplename},${treatment}," >>"${OUT_FILE}"
+  echo "DEBUG: ${plate_id},${smarter_adapter_kit},${mapper},${SEQUENCE},${samplename},${treatment}," >>"${LOG}"
 }
 
 get_vl() {
@@ -104,7 +108,9 @@ get_nreads() {
 
 get_nhuman_reads() {
   echo "INFO: Get number of human reads" >>"${LOG}"
+  set +e
   nhuman=$(grep -m1 'Homo sapiens' "${IN_FILE_KRAKEN_REPORT}" | cut -f2)
+  set -e
   echo -n "${nhuman}," >>"${OUT_FILE}"
   echo "DEBUG: ${nhuman}," >>"${LOG}"
 }
@@ -140,7 +146,9 @@ get_mapped_positive() {
 
 get_duprate() {
   echo "INFO: Get duprate" >>"${LOG}"
+  set +e
   duprate=$(grep -h -m1 ^"Unknown Library" "${IN_FILE_DEDUP_STATS}" | cut -f9)
+  set -e
   echo -n "${duprate}," >>"${OUT_FILE}"
   echo "DEBUG: ${duprate}," >>"${LOG}"
 }

@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 
-set -e
+set -eu -o pipefail
 
 CONDA_BIN="${1}"
-IN_FILE_FILTFWD="${2}"
-IN_FILE_FILTBWD="${3}"
-OUT_FILE_CLEANFWD="${4}"
-OUT_FILE_CLEANBWD="${5}"
-TMP_OUT_FILE_FQFWD="${6}"
-TMP_OUT_FILE_FQBWD="${7}"
+IN_FILE_FILT_FWD="${2}"
+IN_FILE_FILT_BWD="${3}"
+OUT_FILE_CLEAN_FWD="${4}"
+OUT_FILE_CLEAN_BWD="${5}"
+TMP_OUT_FILE_FQ_FWD="${6}"
+TMP_OUT_FILE_FQ_BWD="${7}"
 ADAPTERS_FILE="${8}"
 TRIMMOMATIC_MINLEN="${9}"
 LOG="${10}"
 CORES="${11}"
 
 OUTPUT_FILES=(
-  "${OUT_FILE_CLEANFWD}"
-  "${OUT_FILE_CLEANBWD}"
-  "${TMP_OUT_FILE_FQFWD}"
-  "${TMP_OUT_FILE_FQBWD}"
+  "${OUT_FILE_CLEAN_FWD}"
+  "${OUT_FILE_CLEAN_BWD}"
+  "${TMP_OUT_FILE_FQ_FWD}"
+  "${TMP_OUT_FILE_FQ_BWD}"
 )
 
 check_infile() {
@@ -44,9 +44,9 @@ run_trimmomatic() {
   echo "INFO: Running trimmomatic"
   set +e
   "${CONDA_BIN}"/trimmomatic PE -threads "${CORES}" \
-    "${IN_FILE_FILTFWD}" "${IN_FILE_FILTBWD}" \
-    "${OUT_FILE_CLEANFWD}" "${TMP_OUT_FILE_FQFWD}" \
-    "${OUT_FILE_CLEANBWD}" "${TMP_OUT_FILE_FQBWD}" \
+    "${IN_FILE_FILT_FWD}" "${IN_FILE_FILT_BWD}" \
+    "${OUT_FILE_CLEAN_FWD}" "${TMP_OUT_FILE_FQ_FWD}" \
+    "${OUT_FILE_CLEAN_BWD}" "${TMP_OUT_FILE_FQ_BWD}" \
     ILLUMINACLIP:"${ADAPTERS_FILE}":2:10:7:1:true MINLEN:"${TRIMMOMATIC_MINLEN}" LEADING:20 TRAILING:20 SLIDINGWINDOW:4:20
   retVal=$?
   echo "INFO: trimmomatic return value: ${retVal}"
@@ -63,6 +63,6 @@ run_trimmomatic() {
 }
 
 {
-  check_infile "${IN_FILE_FILTFWD}"
+  check_infile "${IN_FILE_FILT_FWD}"
   run_trimmomatic
 } >"${LOG}" 2>&1

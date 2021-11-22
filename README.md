@@ -73,12 +73,13 @@ module load python/2.7.11
     cd ShiverCovid
     ```
 
-1. Replace all `"<to_be_completed>"` references in `./snakemake/_config.yaml` with information specific to your environment.
+1. Replace all `<to_be_completed>` references in `./snakemake/_config.yaml` with information specific to your environment.
 
 1. Run the preprocessing script:
     ```
-    ./scripts/preprocessing/setup.sh <Raw Data Directory>
+    ./scripts/preprocessing/setup.sh
     ```
+   You will be prompted for input parameter(s).
 
 1. Execute the Snakemake workflow.
 
