@@ -8,7 +8,6 @@ CONDA_BIN=$(grep "CONDA_BIN" <"${CONFIG_FILE}" | sed -e "s/CONDA_BIN: //" | cut 
 SHIVER_MAPPER=$(grep "SHIVER_MAPPER" <"${CONFIG_FILE}" | sed -e "s/SHIVER_MAPPER: //" | cut -f1 -d" ")
 RAW_MINCOV_RELAXED=$(grep "RAW_MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_RELAXED: //" | cut -f1 -d" ")
 RAW_MINCOV_STRICT=$(grep "RAW_MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_STRICT: //" | cut -f1 -d" ")
-CONFIG_VARS=("${CONDA_BIN}" "${SHIVER_MAPPER}" "${RAW_MINCOV_RELAXED}" "${RAW_MINCOV_STRICT}")
 
 echo "CONDA_BIN is set to '${CONDA_BIN}'"
 echo "SHIVER_MAPPER is set to '${SHIVER_MAPPER}'"
