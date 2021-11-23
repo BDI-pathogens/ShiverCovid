@@ -10,13 +10,6 @@ RAW_MINCOV_RELAXED=$(grep "RAW_MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/RAW
 RAW_MINCOV_STRICT=$(grep "RAW_MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_STRICT: //" | cut -f1 -d" ")
 CONFIG_VARS=("${CONDA_BIN}" "${SHIVER_MAPPER}" "${RAW_MINCOV_RELAXED}" "${RAW_MINCOV_STRICT}")
 
-for config_var in "${CONFIG_VARS[@]}"; do
-  if [[ -z "${config_var}" ]]; then
-    echo "ERROR: ${config_var} is unset"
-    exit 1
-  fi
-done
-
 echo "CONDA_BIN is set to '${CONDA_BIN}'"
 echo "SHIVER_MAPPER is set to '${SHIVER_MAPPER}'"
 echo "RAW_MINCOV_RELAXED is set to '${RAW_MINCOV_RELAXED}'"
