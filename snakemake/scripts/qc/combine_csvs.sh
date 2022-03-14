@@ -16,7 +16,8 @@ INPUT_ARRAY=("$@")
 TEMP_OUT_FILE="${OUT_FILE}.tmp"
 
 header() {
-  echo "plateid,\
+  echo "pipeline,
+plateid,\
 smarter_adapter_kit,\
 mapper,\
 seqname,\

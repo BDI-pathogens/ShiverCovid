@@ -44,13 +44,12 @@ qc() {
 
 get_meta_data() {
   echo "INFO: Get metadata" >>"${LOG}"
+  pipeline=git_release="ShiverCovid-$("${CONDA_BIN}"/git describe --tags --always)"
   plate_id="$(basename "${PROCESSING_DIR}")"
-  smarter_adapter_kit="${SMARTER_ADAPTER_KIT}"
-  mapper="${SHIVER_MAPPER}"
   samplename="$(cut -d'_' -f1 <<<"${SEQUENCE}")"
   treatment="$(cut -d'_' -f2 <<<"${SEQUENCE}")"
-  echo -n "${plate_id},${smarter_adapter_kit},${mapper},${SEQUENCE},${samplename},${treatment}," >>"${OUT_FILE}"
-  echo "DEBUG: ${plate_id},${smarter_adapter_kit},${mapper},${SEQUENCE},${samplename},${treatment}," >>"${LOG}"
+  echo -n "${pipeline},${plate_id},${SMARTER_ADAPTER_KIT},${SHIVER_MAPPER},${SEQUENCE},${samplename},${treatment}," >>"${OUT_FILE}"
+  echo "DEBUG: ${pipeline},${plate_id},${SMARTER_ADAPTER_KIT},${SHIVER_MAPPER},${SEQUENCE},${samplename},${treatment}," >>"${LOG}"
 }
 
 get_vl() {
