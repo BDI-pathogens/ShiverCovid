@@ -44,7 +44,7 @@ qc() {
 
 get_meta_data() {
   echo "INFO: Get metadata" >>"${LOG}"
-  pipeline=git_release="ShiverCovid-$("${CONDA_BIN}"/git describe --tags --always)"
+  pipeline="ShiverCovid-$("${CONDA_BIN}"/git describe --tags --always)"
   plate_id="$(basename "${PROCESSING_DIR}")"
   samplename="$(cut -d'_' -f1 <<<"${SEQUENCE}")"
   treatment="$(cut -d'_' -f2 <<<"${SEQUENCE}")"
