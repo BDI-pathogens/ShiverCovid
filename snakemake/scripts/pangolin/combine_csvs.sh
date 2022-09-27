@@ -9,6 +9,10 @@ LOG="${4}"
 
 TEMP_OUT_FILE="${OUT_FILE}.tmp"
 
+OUTPUT_FILES=(
+  "${OUT_FILE}"
+)
+
 create_dummy_files() {
   echo "INFO: Creating dummy output files..."
   for file in "${OUTPUT_FILES[@]}"; do
