@@ -38,6 +38,7 @@ combine_csvs() {
   if [[ -z "${header}" ]]; then
     echo "WARNING: All input files are empty"
     create_dummy_files
+    exit 0
   else
     echo "${header}" >>"${TEMP_OUT_FILE}"
     for file in "${OUTPUT_DIR_PANGOLIN}"/*"${PANGOLIN_FILE_SUFFIX}"*; do
