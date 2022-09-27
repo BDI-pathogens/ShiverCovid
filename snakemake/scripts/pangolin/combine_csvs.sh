@@ -9,7 +9,17 @@ LOG="${4}"
 
 TEMP_OUT_FILE="${OUT_FILE}.tmp"
 
-header() {
+create_dummy_files() {
+  echo "INFO: Creating dummy output files..."
+  for file in "${OUTPUT_FILES[@]}"; do
+    if [[ ! -f "${file}" ]]; then
+      echo "${file}"
+      touch "${file}"
+    fi
+  done
+} >>"${LOG}"
+
+get_header() {
   for file in "${OUTPUT_DIR_PANGOLIN}"/*"${PANGOLIN_FILE_SUFFIX}"*; do
     if [[ -s "${file}" ]]; then
       header=$(head -1 "${file}")
@@ -17,19 +27,25 @@ header() {
     fi
   done
   echo "${header}"
-} >"${TEMP_OUT_FILE}"
+}
 
 combine_csvs() {
-  header
-  for file in "${OUTPUT_DIR_PANGOLIN}"/*"${PANGOLIN_FILE_SUFFIX}"*; do
-    if [[ -s ${file} ]]; then
-      echo "INFO: Adding ${file}" >>"${LOG}"
-      data=$(awk NR\>1 "${file}")
-      echo "${data}" >>"${TEMP_OUT_FILE}"
-    else
-      echo "WARNING: ${file} does not exist or is empty. Skipping..." >>"${LOG}"
-    fi
-  done
+  header=$(get_header)
+  if [[ -z "${header}" ]]; then
+    echo "WARNING: All input files are empty"
+    create_dummy_files
+  else
+    echo "${header}" >>"${TEMP_OUT_FILE}"
+    for file in "${OUTPUT_DIR_PANGOLIN}"/*"${PANGOLIN_FILE_SUFFIX}"*; do
+      if [[ -s ${file} ]]; then
+        echo "INFO: Adding ${file}" >>"${LOG}"
+        data=$(awk NR\>1 "${file}")
+        echo "${data}" >>"${TEMP_OUT_FILE}"
+      else
+        echo "WARNING: ${file} does not exist or is empty. Skipping..." >>"${LOG}"
+      fi
+    done
+  fi
 }
 
 sort_tmp_csv() {
