@@ -23,10 +23,10 @@ get_header() {
   for file in "${OUTPUT_DIR_PANGOLIN}"/*"${PANGOLIN_FILE_SUFFIX}"*; do
     if [[ -s "${file}" ]]; then
       header=$(head -1 "${file}")
+      echo "${header}"
       break
     fi
   done
-  echo "${header}"
 }
 
 combine_csvs() {
