@@ -25,7 +25,8 @@ run() {
     --output-wait 30 \
     --max-status-checks-per-second 0.01 \
     --rerun-incomplete \
-    --keep-going
+    --keep-going \
+    --rerun-triggers mtime
 }
 
 export SGE_ROOT="${SGE_ROOT}"
