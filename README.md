@@ -19,7 +19,7 @@ The snakemake workflow will fail upon error. Once an issue is resolved, it can b
 - Snakemake
 - shiver 1.5.8 (and associated prerequisites) *
 
-The pipeline has been tested on a Linux environment using an SGE cluster.
+The pipeline has been tested on a Linux environment using a Slurm Workload Manager.
 
 The project relies on a Kraken 2 database, which is not yet part of this repo so this solution is not currently (standalone) portable.
 
@@ -83,7 +83,7 @@ module load python/2.7.11
 
 1. Execute the Snakemake workflow.
 
-   A script has been provided to submit the job to an SGE cluster: `./snakemake/submit.sh`
+   A script has been provided to submit the job to a Slurm Workload Manager: `./snakemake/submit.sh`
    
    Further information about executing Snakemake can be found in the documentation (https://snakemake.readthedocs.io/en/stable/).
 

@@ -17,7 +17,7 @@ check_file_exists() {
 
 run() {
   "$(which snakemake)" \
-    --cluster "$(which qsub) -cwd -P {params.project} -q {params.queues} -pe shmem {params.cores} -o /dev/null -j y -v PATH={params.conda_bin}:$PATH -S /bin/bash" \
+    --cluster "$(which sbatch) -A {params.project} -p {params.queues} --cpus-per-task={params.cores} -o /dev/null" \
     --jobs 50 \
     --jn "{rulename}_${PLATE_ID}.{jobid}.sh" \
     --use-conda \
