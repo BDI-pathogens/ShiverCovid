@@ -29,7 +29,6 @@ run() {
     --rerun-triggers mtime
 }
 
-export SGE_ROOT="${SGE_ROOT}"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}"/argparse.sh || exit 1
 argparse "$@" <<EOF || exit 1
