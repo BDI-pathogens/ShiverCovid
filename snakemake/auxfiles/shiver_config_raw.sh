@@ -220,7 +220,7 @@ deduplicate=true
 # include options in this command, such as a non-default
 # DUPLICATE_SCORING_STRATEGY, but do not include options relating to file-naming
 # or the associated shiver commands will break):
-DeduplicationCommand="picard MarkDuplicates"
+DeduplicationCommand="${CONDA_BIN}/picard MarkDuplicates"
 
 # Shall we remap to the consensus? (For remapping, gaps in coverage in the
 # consensus will filled in by the corresponding part of the orginal reference,
