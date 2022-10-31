@@ -138,7 +138,7 @@ get_mapped() {
 
 get_mapped_positive() {
   echo "INFO: Get mapped_positive" >>"${LOG}"
-  mapped_positive=$(($(samtools view -f3 "${IN_FILE_BAM}" | awk '($2!=147)&&($2!=99)' | wc -l) / 2))
+  mapped_positive=$(($("${CONDA_BIN}"/samtools view -f3 "${IN_FILE_BAM}" | awk '($2!=147)&&($2!=99)' | wc -l) / 2))
   echo -n "${mapped_positive}," >>"${OUT_FILE}"
   echo "DEBUG: ${mapped_positive}," >>"${LOG}"
 }
