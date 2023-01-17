@@ -363,7 +363,7 @@ rule shiver_basefreqs:
         basefreqs_consensus_run1=protected(join(
             OUTPUT_DIR_SHIVER_BASEFREQS,"{samples}" + f"_consensus_MinCov_{BASEFREQS_MINCOV_RELAXED_STR_RUN1}_{BASEFREQS_MINCOV_STRICT_STR_RUN1}.fasta")),
         basefreqs_consensus_run2=protected(join(
-            OUTPUT_DIR_SHIVER_BASEFREQS,"{samples}" + f"_consensus_MinCov_{BASEFREQS_MINCOV_RELAXED_STR_RUN1}_{BASEFREQS_MINCOV_STRICT_STR_RUN1}.fasta")),
+            OUTPUT_DIR_SHIVER_BASEFREQS,"{samples}" + f"_consensus_MinCov_{BASEFREQS_MINCOV_RELAXED_STR_RUN2}_{BASEFREQS_MINCOV_STRICT_STR_RUN2}.fasta")),
         tmp_pileup=temp(join(OUTPUT_DIR_SHIVER_BASEFREQS,"temp_{samples}_PreDedup.pileup"))
     log: join(LOG_DIR_SHIVER_BASEFREQS,"{samples}_shiver_basefreqs_run1.log")
     params:
@@ -544,7 +544,7 @@ rule qc:
         consensus_basefreqs_run1=join(OUTPUT_DIR_SHIVER_BASEFREQS,
             "{samples}" + f"_consensus_MinCov_{BASEFREQS_MINCOV_RELAXED_STR_RUN1}_{BASEFREQS_MINCOV_STRICT_STR_RUN1}.fasta"),
         consensus_basefreqs_run2=join(OUTPUT_DIR_SHIVER_BASEFREQS,
-            "{samples}" + f"_consensus_MinCov_{BASEFREQS_MINCOV_RELAXED_STR_RUN1}_{BASEFREQS_MINCOV_STRICT_STR_RUN1}.fasta"),
+            "{samples}" + f"_consensus_MinCov_{BASEFREQS_MINCOV_RELAXED_STR_RUN2}_{BASEFREQS_MINCOV_STRICT_STR_RUN2}.fasta"),
         script_iz=join(REPO_BASE_DIR,"snakemake","scripts","qc","iz_stats_from_shiver.py"),
         script_seq_len=join(REPO_BASE_DIR,"snakemake","scripts","utils","print_seq_lengths.py"),
         script=join(REPO_BASE_DIR,"snakemake","scripts","qc","qc_consensus.sh")
