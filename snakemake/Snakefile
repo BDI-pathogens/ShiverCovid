@@ -584,8 +584,6 @@ rule qc_combine_csvs:
         mincov_strict_basefreqs_run1=BASEFREQS_MINCOV_STRICT_STR_RUN1,
         mincov_relaxed_basefreqs_run2=BASEFREQS_MINCOV_RELAXED_STR_RUN2,
         mincov_strict_basefreqs_run2=BASEFREQS_MINCOV_STRICT_STR_RUN2,
-        raw_data_dir=RAW_DATA_DIR,
-        processing_dir=PROCESSING_DIR,
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
         cores=1,
         project=CLUSTER_PROJECT_NAME
