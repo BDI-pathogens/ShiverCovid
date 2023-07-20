@@ -62,10 +62,10 @@ decompress_fwd() {
 
 decompress_and_trim_bwd() {
   if [[ "${SMARTER_ADAPTER_KIT}" == "v2" ]]; then
-    echo "INFO: Merge reverse fastqs and decompress, while removing 3 bases (the v2 SMARTer adapter)"
+    echo "INFO: Decompress reverse fastq, while removing 3 bases (the v2 SMARTer adapter)"
     zcat "${IN_FILE_GZ_BWD}" | awk '{if (NR % 2 == 0) { print substr($0,4) } else { print $0 }}' >"${OUT_FILE_BWD}"
   elif [[ "${SMARTER_ADAPTER_KIT}" == "v3" ]]; then
-    echo "INFO: Merge reverse fastqs and decompress, while removing 14 bases (the v3 SMARTer adapter)"
+    echo "INFO: Decompress reverse fastq, while removing 14 bases (the v3 SMARTer adapter)"
     zcat "${IN_FILE_GZ_BWD}" | awk '{if (NR % 2 == 0) { print substr($0,15) } else { print $0 }}' >"${OUT_FILE_BWD}"
   else
     echo "ERROR: Unknown SMARTer Adapter kit '${SMARTER_ADAPTER_KIT}'. Exiting..."
