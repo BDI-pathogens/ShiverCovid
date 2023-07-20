@@ -17,7 +17,8 @@ check_file_exists() {
 
 run() {
   "$(which snakemake)" \
-    --cluster "$(which sbatch) -A {params.project} -p {params.queues} --cpus-per-task={params.cores} -o /dev/null" \
+    --cluster "$(which sbatch) -A {params.project} -p {params.queues} --cpus-per-task={params.cores} -o /dev/null --parsable" \
+    --cluster-status ./status/slurm_status.sh \
     --jobs 50 \
     --jn "{rulename}_${PLATE_ID}.{jobid}.sh" \
     --use-conda \
