@@ -17,7 +17,7 @@ The snakemake workflow will fail upon error. Once an issue is resolved, it can b
 
 - Miniconda 3
 - Snakemake
-- shiver 1.5.8 (and associated prerequisites) *
+- Shiver 1.5.8 (and associated prerequisites) *
 
 The pipeline has been tested on a Linux environment using a Slurm Workload Manager.
 
@@ -61,27 +61,27 @@ module load python/2.7.11
 
 1. Create a directory for data processing of the form `YYYY-MM-DD_<Batch Name(s)>` and navigate to that directory.
 
-1. Create a `samples.txt` file containing a list of samples for processing, with one sample per row.
+2. Create a `samples.txt` file containing a list of samples for processing, with one sample per row.
 
-1. Clone this repo:
+3. Clone this repo:
     ```
     git clone git@github.com:BDI-pathogens/ShiverCovid.git
     ```
-
-1. Change directory:
+   
+4. Change directory:
     ```
     cd ShiverCovid
     ```
 
-1. Replace all `<to_be_completed>` references in `./snakemake/_config.yaml` with information specific to your environment.
+5. Replace all `<to_be_completed>` references in `./snakemake/_config.yaml` with information specific to your environment.
 
-1. Run the preprocessing script:
+6. Run the preprocessing script:
     ```
     ./scripts/preprocessing/setup.sh
     ```
    You will be prompted for input parameter(s).
 
-1. Execute the Snakemake workflow.
+7. Execute the Snakemake workflow.
 
    A script has been provided to submit the job to a Slurm Workload Manager: `./snakemake/submit.sh`
    
