@@ -4,20 +4,19 @@ set -e
 
 SCRIPT_ANALYSE_PILEUP="${1}"
 SCRIPT_CALL_CONSENSUS="${2}"
-CONDA_BIN="${3}"
-IN_FILE_BAM_PRE_DEDUP="${4}"
-OUT_FILE_BASEFREQS="${5}"
-OUT_FILE_CONSENSUS_RUN1="${6}"
-OUT_FILE_CONSENSUS_RUN2="${7}"
-TMP_OUT_FILE_PILEUP="${8}"
-REF_STEM_FILE="${9}"
-MINCOV_RELAXED_RUN1="${10}"
-MINCOV_STRICT_RUN1="${11}"
-MINCOV_RELAXED_RUN2="${12}"
-MINCOV_STRICT_RUN2="${13}"
-MIN_BASE_QUALITY="${14}"
-MAX_DEPTH="${15}"
-LOG="${16}"
+IN_FILE_BAM_PRE_DEDUP="${3}"
+OUT_FILE_BASEFREQS="${4}"
+OUT_FILE_CONSENSUS_RUN1="${5}"
+OUT_FILE_CONSENSUS_RUN2="${6}"
+TMP_OUT_FILE_PILEUP="${7}"
+REF_STEM_FILE="${8}"
+MINCOV_RELAXED_RUN1="${9}"
+MINCOV_STRICT_RUN1="${10}"
+MINCOV_RELAXED_RUN2="${11}"
+MINCOV_STRICT_RUN2="${12}"
+MIN_BASE_QUALITY="${13}"
+MAX_DEPTH="${14}"
+LOG="${15}"
 
 CONSENSUS_SEQ_NAME_RUN1=$(basename "${OUT_FILE_CONSENSUS_RUN1}" | cut -d. -f1)
 CONSENSUS_SEQ_NAME_RUN2=$(basename "${OUT_FILE_CONSENSUS_RUN2}" | cut -d. -f1)
@@ -58,10 +57,10 @@ check_for_pileup() {
 
 samtools_pileup() {
   echo "INFO: Run samtools mpileup"
-  echo "DEBUG: ${CONDA_BIN}/samtools mpileup --no-BAQ --min-BQ ${MIN_BASE_QUALITY} --max-depth ${MAX_DEPTH} \
+  echo "DEBUG: samtools mpileup --no-BAQ --min-BQ ${MIN_BASE_QUALITY} --max-depth ${MAX_DEPTH} \
     --reference ${REF_STEM_FILE} ${IN_FILE_BAM_PRE_DEDUP} 1>${TMP_OUT_FILE_PILEUP} 2>>${LOG}"
 
-  "${CONDA_BIN}"/samtools mpileup --no-BAQ --min-BQ "${MIN_BASE_QUALITY}" --max-depth "${MAX_DEPTH}" \
+  "samtools mpileup --no-BAQ --min-BQ "${MIN_BASE_QUALITY}" --max-depth "${MAX_DEPTH}" \
     --reference "${REF_STEM_FILE}" "${IN_FILE_BAM_PRE_DEDUP}" 1>"${TMP_OUT_FILE_PILEUP}" 2>>"${LOG}"
   retVal=$?
   check_return ${retVal} "samtools mpileup"

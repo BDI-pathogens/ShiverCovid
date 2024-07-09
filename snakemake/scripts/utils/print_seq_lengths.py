@@ -1,11 +1,10 @@
-from __future__ import print_function
-
 import argparse
 import os
 import re
 import sys
 
 from Bio import SeqIO
+from six.moves import map
 
 """"Author: Chris Wymant, chris.wymant@bdi.ox.ac.uk
 Acknowledgement: I wrote this while funded by ERC Advanced Grant PBDR-339251
@@ -79,6 +78,21 @@ undetermined_start_regex = r"^[nN\?]+"
 undetermined_end_regex = r"[nN\?]+$"
 
 
+def ungap(seq_object, gap_char="-"):
+    """Try both replace and ungap on seq objects, flexible to Biopython version"""
+    try:
+        seq_ungapped = seq_object.replace(gap_char, "")
+    except AttributeError:
+        try:
+            seq_ungapped = seq_object.ungap(gap_char)
+        except AttributeError:
+            print("shiver's ungap function called on a Biopython Seq object that has",
+                  'neither a .replace() attribute nor an .ungap() attribute. Unexpected.',
+                  "Quitting.", file=sys.stderr)
+            raise
+    return seq_ungapped
+
+
 def main():
     seq_lengths = []
     for file_ in args.FastaFile:
@@ -108,12 +122,12 @@ def main():
                 continue
 
             if not args.include_gaps:
-                seq.seq = seq.seq.ungap("-")
+                seq.seq = ungap(seq.seq)
                 if not args.fragments:
-                    seq.seq = seq.seq.ungap("?")
+                    seq.seq = ungap(seq.seq, "?")
             if args.ignore_n:
-                seq.seq = seq.seq.ungap("n")
-                seq.seq = seq.seq.ungap("N")
+                seq.seq = ungap(seq.seq, "n")
+                seq.seq = ungap(seq.seq, "N")
             if args.ignore_lower_case:
                 seq.seq = ''.join(x for x in seq.seq if not x.islower())
             if args.fragments:

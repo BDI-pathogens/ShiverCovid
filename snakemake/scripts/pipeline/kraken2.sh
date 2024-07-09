@@ -2,14 +2,13 @@
 
 set -eu -o pipefail
 
-CONDA_BIN="${1}"
-IN_FILE_FASTQ_FWD="${2}"
-IN_FILE_FASTQ_BWD="${3}"
-OUT_FILE_KRAKEN="${4}"
-OUT_FILE_KRAKEN_REPORT="${5}"
-KRAKEN2_DB="${6}"
-LOG="${7}"
-CORES="${8}"
+IN_FILE_FASTQ_FWD="${1}"
+IN_FILE_FASTQ_BWD="${2}"
+OUT_FILE_KRAKEN="${3}"
+OUT_FILE_KRAKEN_REPORT="${4}"
+KRAKEN2_DB="${5}"
+LOG="${6}"
+CORES="${7}"
 
 OUTPUT_FILES=(
   "${OUT_FILE_KRAKEN}"
@@ -56,10 +55,10 @@ sanity_check() {
 
 kraken2() {
   echo "INFO: Run kraken2"
-  echo "DEBUG: ${CONDA_BIN}/kraken2 --report ${OUT_FILE_KRAKEN_REPORT} --db ${KRAKEN2_DB} --paired \
+  echo "DEBUG: kraken2 --report ${OUT_FILE_KRAKEN_REPORT} --db ${KRAKEN2_DB} --paired \
     --threads ${CORES} ${IN_FILE_FASTQ_FWD} ${IN_FILE_FASTQ_BWD} 1>${OUT_FILE_KRAKEN} 2>>${LOG}"
 
-  "${CONDA_BIN}"/kraken2 --report "${OUT_FILE_KRAKEN_REPORT}" --db "${KRAKEN2_DB}" --paired \
+  kraken2 --report "${OUT_FILE_KRAKEN_REPORT}" --db "${KRAKEN2_DB}" --paired \
     --threads "${CORES}" "${IN_FILE_FASTQ_FWD}" "${IN_FILE_FASTQ_BWD}" 1>"${OUT_FILE_KRAKEN}" 2>>"${LOG}"
 }
 

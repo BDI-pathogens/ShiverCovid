@@ -3,10 +3,9 @@
 set -eu -o pipefail
 
 SCRIPT="${1}"
-CONDA_BIN="${2}"
-IN_FILE="${3}"
-OUT_FILE="${4}"
-LOG="${5}"
+IN_FILE="${2}"
+OUT_FILE="${3}"
+LOG="${4}"
 
 OUTPUT_FILES=(
   "${OUT_FILE}"
@@ -51,9 +50,9 @@ check_out_file() {
 preprocess_bwd() {
   echo "INFO: Run ${SCRIPT} for ${IN_FILE}"
   # Map up to 10 million (pre-filtered) read pairs to avoid extreme runtimes (take first 40mln lines)
-  echo "DEBUG: ${CONDA_BIN}/python ${SCRIPT} ${IN_FILE} 2 | head -n 40000000 1>${OUT_FILE} 2>>${LOG}"
+  echo "DEBUG: python ${SCRIPT} ${IN_FILE} 2 | head -n 40000000 1>${OUT_FILE} 2>>${LOG}"
 
-  "${CONDA_BIN}"/python "${SCRIPT}" "${IN_FILE}" 2 | head -n 40000000 1>"${OUT_FILE}" 2>>"${LOG}"
+  python "${SCRIPT}" "${IN_FILE}" 2 | head -n 40000000 1>"${OUT_FILE}" 2>>"${LOG}"
 }
 
 {
