@@ -329,7 +329,7 @@ rule shiver_samtools_index:
     output:
         bai=join(OUTPUT_DIR_SHIVER_RAW,"{samples}.bam.bai"),
         bai_remap=join(OUTPUT_DIR_SHIVER_RAW,"{samples}_remap.bam.bai")
-    log: join(LOG_DIR_SHIVER,"{samples}_samtools_index.log")
+    log: join(LOG_DIR_SHIVER_RAW,"{samples}_samtools_index.log")
     params:
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
         cores=1,
