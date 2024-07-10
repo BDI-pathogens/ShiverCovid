@@ -325,10 +325,10 @@ rule shiver_map_reads_copy:
         "cp {params.shiver_sample_dir}/{params.sample}* {params.shiver_output_dir}"
 
 rule shiver_samtools_index:
-    input: join(OUTPUT_DIR_SHIVER,"{samples}.bam"),
+    input: join(OUTPUT_DIR_SHIVER_RAW,"{samples}.bam"),
     output:
-        bai=join(OUTPUT_DIR_SHIVER,"{samples}.bam.bai"),
-        bai_remap=join(OUTPUT_DIR_SHIVER,"{samples}_remap.bam.bai")
+        bai=join(OUTPUT_DIR_SHIVER_RAW,"{samples}.bam.bai"),
+        bai_remap=join(OUTPUT_DIR_SHIVER_RAW,"{samples}_remap.bam.bai")
     log: join(LOG_DIR_SHIVER,"{samples}_samtools_index.log")
     params:
         queues=CLUSTER_CONFIG_SHORT_QUEUES,
