@@ -337,7 +337,7 @@ rule shiver_samtools_index:
     shell:
         "if [[ ! -s {input} ]]; \
 then touch {output.bai}; \
-else samtools index {input.bam} >{log} 2>&1; fi"
+else samtools index {input} >{log} 2>&1; fi"
 
 rule shiver_basefreqs:
     input:
