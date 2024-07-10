@@ -32,9 +32,8 @@ def main():
     else:
         print(f"Writing to {out_file}")
         record = next(SeqIO.parse(in_file, 'fasta'))
-        ungap_record = record.copy()
-        ungap_record.seq = ungap(ungap_record.seq, '-')
-        SeqIO.write(ungap_record, out_file, 'fasta')
+        record.seq = ungap(record.seq, '-')
+        SeqIO.write(record, out_file, 'fasta')
 
 
 if __name__ == '__main__':
