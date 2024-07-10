@@ -53,18 +53,18 @@ sanity_check() {
   fi
 }
 
-kraken2() {
+run_kraken2() {
   echo "INFO: Run kraken2"
   echo "DEBUG: kraken2 --report ${OUT_FILE_KRAKEN_REPORT} --db ${KRAKEN2_DB} --paired \
-    --threads ${CORES} ${IN_FILE_FASTQ_FWD} ${IN_FILE_FASTQ_BWD} 1>${OUT_FILE_KRAKEN} 2>>${LOG}"
+    --threads ${CORES} ${IN_FILE_FASTQ_FWD} ${IN_FILE_FASTQ_BWD} 1>${OUT_FILE_KRAKEN}"
 
   kraken2 --report "${OUT_FILE_KRAKEN_REPORT}" --db "${KRAKEN2_DB}" --paired \
-    --threads "${CORES}" "${IN_FILE_FASTQ_FWD}" "${IN_FILE_FASTQ_BWD}" 1>"${OUT_FILE_KRAKEN}" 2>>"${LOG}"
+    --threads "${CORES}" "${IN_FILE_FASTQ_FWD}" "${IN_FILE_FASTQ_BWD}" 1>"${OUT_FILE_KRAKEN}"
 }
 
 {
   check_infile "${IN_FILE_FASTQ_FWD}"
-  kraken2
+  run_kraken2
   retVal=$?
   check_return ${retVal}
   sanity_check
