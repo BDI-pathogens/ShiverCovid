@@ -39,10 +39,8 @@ get_coverage() {
 }
 
 run_pangolin() {
-  eval "$("$(which -a conda | grep condabin)" shell.bash hook)"
   conda activate pangolin
   pangolin --outfile "${OUT_FILE}" "${IN_FILE}"
-  conda deactivate
 }
 
 {
