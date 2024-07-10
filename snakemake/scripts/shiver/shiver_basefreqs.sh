@@ -60,7 +60,7 @@ samtools_pileup() {
   echo "DEBUG: samtools mpileup --no-BAQ --min-BQ ${MIN_BASE_QUALITY} --max-depth ${MAX_DEPTH} \
     --reference ${REF_STEM_FILE} ${IN_FILE_BAM_PRE_DEDUP} 1>${TMP_OUT_FILE_PILEUP} 2>>${LOG}"
 
-  "samtools mpileup --no-BAQ --min-BQ "${MIN_BASE_QUALITY}" --max-depth "${MAX_DEPTH}" \
+  samtools mpileup --no-BAQ --min-BQ "${MIN_BASE_QUALITY}" --max-depth "${MAX_DEPTH}" \
     --reference "${REF_STEM_FILE}" "${IN_FILE_BAM_PRE_DEDUP}" 1>"${TMP_OUT_FILE_PILEUP}" 2>>"${LOG}"
   retVal=$?
   check_return ${retVal} "samtools mpileup"
