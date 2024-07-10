@@ -10,13 +10,13 @@ def create_dummy_output_file(out_file):
     Path(out_file).touch()
 
 
-def ungap(seq_object, gap_char='-'):
+def ungap(record, gap_char='-'):
     """Try both replace and ungap on seq objects, flexible to Biopython version"""
     logging.debug(f'ungap: record: {record}')
     try:
-        seq_ungapped = seq_object.replace(gap_char, "")
+        seq_ungapped = record.replace(gap_char, "")
     except AttributeError:
-        seq_ungapped = seq_object.ungap(gap_char)
+        seq_ungapped = record.ungap(gap_char)
     return seq_ungapped
 
 
