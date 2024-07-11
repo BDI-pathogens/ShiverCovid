@@ -3,11 +3,10 @@
 set -eu -o pipefail
 
 SCRIPT_SEQ_LEN="${1}"
-CONDA_BIN="${2}"
-IN_FILE="${3}"
-OUT_FILE="${4}"
-COVERAGE_MIN="${5}"
-LOG="${6}"
+IN_FILE="${2}"
+OUT_FILE="${3}"
+COVERAGE_MIN="${4}"
+LOG="${5}"
 
 check_infile() {
   in_file="${1}"
@@ -27,7 +26,7 @@ create_dummy_file() {
 }
 
 get_seq_length() {
-  seq_length=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" -1 "${IN_FILE}" | cut -d' ' -f2)
+  seq_length=$(python "${SCRIPT_SEQ_LEN}" -1 "${IN_FILE}" | cut -d' ' -f2)
   echo "${seq_length}"
 }
 
@@ -42,7 +41,6 @@ get_coverage() {
 run_pangolin() {
   conda activate pangolin
   pangolin --outfile "${OUT_FILE}" "${IN_FILE}"
-  conda deactivate
 }
 
 {

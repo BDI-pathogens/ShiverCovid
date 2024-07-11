@@ -8,20 +8,19 @@ SMARTER_ADAPTER_KIT="${3}"
 SHIVER_MAPPER="${4}"
 SEQUENCE="${5}"
 PROCESSING_DIR="${6}"
-CONDA_BIN="${7}"
-IN_FILE_RAWFASTQFWD="${8}"
-IN_FILE_GC_FILE="${9}"
-IN_FILE_KRAKEN_REPORT="${10}"
-IN_FILE_BAM="${11}"
-IN_FILE_PREDEPUP_BAM="${12}"
-IN_FILE_INSERT_SIZE_FILE="${13}"
-IN_FILE_DEDUP_STATS="${14}"
-IN_FILE_CONSENSUS_RAW="${15}"
-IN_FILE_CONSENSUS_BASEFREQS_RUN1="${16}"
-IN_FILE_CONSENSUS_BASEFREQS_RUN2="${17}"
-IN_FILE_VL="${18}"
-OUT_FILE="${19}"
-LOG="${20}"
+IN_FILE_RAWFASTQFWD="${7}"
+IN_FILE_GC_FILE="${8}"
+IN_FILE_KRAKEN_REPORT="${9}"
+IN_FILE_BAM="${10}"
+IN_FILE_PREDEPUP_BAM="${11}"
+IN_FILE_INSERT_SIZE_FILE="${12}"
+IN_FILE_DEDUP_STATS="${13}"
+IN_FILE_CONSENSUS_RAW="${14}"
+IN_FILE_CONSENSUS_BASEFREQS_RUN1="${15}"
+IN_FILE_CONSENSUS_BASEFREQS_RUN2="${16}"
+IN_FILE_VL="${17}"
+OUT_FILE="${18}"
+LOG="${19}"
 
 REF_NAME="NC_045512.2"
 
@@ -44,7 +43,7 @@ qc() {
 
 get_meta_data() {
   echo "INFO: Get metadata" >>"${LOG}"
-  pipeline="ShiverCovid-$("${CONDA_BIN}"/git describe --tags --always)"
+  pipeline="ShiverCovid-$(git describe --tags --always)"
   plate_id="$(basename "${PROCESSING_DIR}")"
   samplename="$(cut -d'_' -f1 <<<"${SEQUENCE}")"
   treatment="$(cut -d'_' -f2 <<<"${SEQUENCE}")"
@@ -72,7 +71,7 @@ get_bestref() {
 get_insert_stats() {
   echo "INFO: Get insert stats" >>"${LOG}"
   if [[ -s ${IN_FILE_INSERT_SIZE_FILE} ]]; then
-    iz=$("${CONDA_BIN}"/python "${SCRIPT_IZ}" "${IN_FILE_INSERT_SIZE_FILE}")
+    iz=$(python "${SCRIPT_IZ}" "${IN_FILE_INSERT_SIZE_FILE}")
     retVal=$?
     if [[ ${retVal} -ne 0 ]]; then
       echo "ERROR: Command failed. Exiting..." >>"${LOG}"
@@ -124,21 +123,21 @@ get_ncov_reads() {
 
 get_mapped_prededup() {
   echo "INFO: Get mapped prededup" >>"${LOG}"
-  mapped_prededup=$("${CONDA_BIN}"/samtools flagstat "${IN_FILE_PREDEPUP_BAM}" | grep read1 | cut -d' ' -f1)
+  mapped_prededup=$(samtools flagstat "${IN_FILE_PREDEPUP_BAM}" | grep read1 | cut -d' ' -f1)
   echo -n "${mapped_prededup}," >>"${OUT_FILE}"
   echo "DEBUG: ${mapped_prededup}," >>"${LOG}"
 }
 
 get_mapped() {
   echo "INFO: Get mapped" >>"${LOG}"
-  mapped=$("${CONDA_BIN}"/samtools flagstat "${IN_FILE_BAM}" | grep read1 | cut -d' ' -f1)
+  mapped=$(samtools flagstat "${IN_FILE_BAM}" | grep read1 | cut -d' ' -f1)
   echo -n "${mapped}," >>"${OUT_FILE}"
   echo "DEBUG: ${mapped}," >>"${LOG}"
 }
 
 get_mapped_positive() {
   echo "INFO: Get mapped_positive" >>"${LOG}"
-  mapped_positive=$(($("${CONDA_BIN}"/samtools view -f3 "${IN_FILE_BAM}" | awk '($2!=147)&&($2!=99)' | wc -l) / 2))
+  mapped_positive=$(($(samtools view -f3 "${IN_FILE_BAM}" | awk '($2!=147)&&($2!=99)' | wc -l) / 2))
   echo -n "${mapped_positive}," >>"${OUT_FILE}"
   echo "DEBUG: ${mapped_positive}," >>"${LOG}"
 }
@@ -154,8 +153,8 @@ get_duprate() {
 
 get_lengths_raw() {
   echo "INFO: Get lengths for raw shiver data" >>"${LOG}"
-  length_raw1=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" -1 "${IN_FILE_CONSENSUS_RAW}" | cut -d' ' -f2)
-  lenght_raw2=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" -1 -C "${IN_FILE_CONSENSUS_RAW}" | cut -d' ' -f2)
+  length_raw1=$(python "${SCRIPT_SEQ_LEN}" -1 "${IN_FILE_CONSENSUS_RAW}" | cut -d' ' -f2)
+  lenght_raw2=$(python "${SCRIPT_SEQ_LEN}" -1 -C "${IN_FILE_CONSENSUS_RAW}" | cut -d' ' -f2)
   lengths_raw=${length_raw1},${lenght_raw2}
   echo -n "${lengths_raw}," >>"${OUT_FILE}"
   echo "DEBUG: ${lengths_raw}," >>"${LOG}"
@@ -164,10 +163,10 @@ get_lengths_raw() {
 # Ensure the last field has no comma at the end
 get_lengths_basefreq() {
   echo "INFO: Get lengths for basefreq data" >>"${LOG}"
-  length_base1_run1=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" --ignore-n "${IN_FILE_CONSENSUS_BASEFREQS_RUN1}" | cut -d' ' -f2)
-  length_base2_run1=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" --ignore-n -C "${IN_FILE_CONSENSUS_BASEFREQS_RUN1}" | cut -d' ' -f2)
-  length_base1_run2=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" --ignore-n "${IN_FILE_CONSENSUS_BASEFREQS_RUN2}" | cut -d' ' -f2)
-  length_base2_run2=$("${CONDA_BIN}"/python "${SCRIPT_SEQ_LEN}" --ignore-n -C "${IN_FILE_CONSENSUS_BASEFREQS_RUN2}" | cut -d' ' -f2)
+  length_base1_run1=$(python "${SCRIPT_SEQ_LEN}" --ignore-n "${IN_FILE_CONSENSUS_BASEFREQS_RUN1}" | cut -d' ' -f2)
+  length_base2_run1=$(python "${SCRIPT_SEQ_LEN}" --ignore-n -C "${IN_FILE_CONSENSUS_BASEFREQS_RUN1}" | cut -d' ' -f2)
+  length_base1_run2=$(python "${SCRIPT_SEQ_LEN}" --ignore-n "${IN_FILE_CONSENSUS_BASEFREQS_RUN2}" | cut -d' ' -f2)
+  length_base2_run2=$(python "${SCRIPT_SEQ_LEN}" --ignore-n -C "${IN_FILE_CONSENSUS_BASEFREQS_RUN2}" | cut -d' ' -f2)
   lengths_base=${length_base1_run1},${length_base2_run1},${length_base1_run2},${length_base2_run2}
   echo -n "${lengths_base}" >>"${OUT_FILE}"
   echo "DEBUG: ${lengths_base}" >>"${LOG}"

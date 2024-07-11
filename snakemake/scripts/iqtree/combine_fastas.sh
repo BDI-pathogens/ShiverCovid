@@ -2,15 +2,15 @@
 
 set -eu -o pipefail
 
-OUT_FILE="${1}"
-LOG="${2}"
-FILE_ARRAY_START_POSITION=3
-INPUT_ARRAY=("$@")
+INPUT_DIR="${1}"
+OUT_FILE="${2}"
+LOG="${3}"
 
 TEMP_OUT_FILE="${OUT_FILE}.tmp"
 
-combine_csvs() {
-  for file in "${INPUT_ARRAY[@]:${FILE_ARRAY_START_POSITION}-1}"; do
+
+combine_fasta_files() {
+   for file in "${INPUT_DIR}"/*.fasta; do
     if [[ -s ${file} ]]; then
       echo "INFO: Adding ${file}" >>"${LOG}"
       data=$(cat "${file}")
@@ -22,7 +22,7 @@ combine_csvs() {
 }
 
 {
-  combine_csvs
+  combine_fasta_files
   if [[ -s "${TEMP_OUT_FILE}" ]]; then
     mv "${TEMP_OUT_FILE}" "${OUT_FILE}"
   else

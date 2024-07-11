@@ -2,17 +2,16 @@
 
 set -eu -o pipefail
 
-CONDA_BIN="${1}"
-IN_FILE_COMBINED_FASTAS="${2}"
-OUT_FILE_CONTREE="${3}"
-OUT_FILE_IQTREE="${4}"
-OUT_FILE_MLDIST="${5}"
-OUT_FILE_SPLITS="${6}"
-OUT_FILE_TREEFILE="${7}"
-MAX_CORES="${8}"
-SUBSTITUTION_MODEL="${9}"
-BOOTSTRAP_REPLICATES="${10}"
-LOG="${11}"
+IN_FILE_COMBINED_FASTAS="${1}"
+OUT_FILE_CONTREE="${2}"
+OUT_FILE_IQTREE="${3}"
+OUT_FILE_MLDIST="${4}"
+OUT_FILE_SPLITS="${5}"
+OUT_FILE_TREEFILE="${6}"
+MAX_CORES="${7}"
+SUBSTITUTION_MODEL="${8}"
+BOOTSTRAP_REPLICATES="${9}"
+LOG="${10}"
 
 OUTPUT_FILES=(
   "${OUT_FILE_CONTREE}"
@@ -34,7 +33,7 @@ create_dummy_files() {
 
 run_iqtree() {
   set +e
-  msg=$("${CONDA_BIN}"/iqtree -s "${IN_FILE_COMBINED_FASTAS}" -nt AUTO -ntmax "${MAX_CORES}" -m "${SUBSTITUTION_MODEL}" \
+  msg=$(iqtree -s "${IN_FILE_COMBINED_FASTAS}" -nt AUTO -ntmax "${MAX_CORES}" -m "${SUBSTITUTION_MODEL}" \
     -czb -bb "${BOOTSTRAP_REPLICATES}")
   retVal=$?
   echo "${msg}"

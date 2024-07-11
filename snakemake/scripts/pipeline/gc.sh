@@ -3,10 +3,9 @@
 set -eu -o pipefail
 
 SCRIPT="${1}"
-CONDA_BIN="${2}"
-IN_FILE_RAWFASTQ_FWD="${3}"
-OUT_FILE_GC="${4}"
-LOG="${5}"
+IN_FILE_RAWFASTQ_FWD="${2}"
+OUT_FILE_GC="${3}"
+LOG="${4}"
 
 OUTPUT_FILES=(
   "${OUT_FILE_GC}"
@@ -42,9 +41,9 @@ check_return() {
 
 gc() {
   echo "INFO: Run ${SCRIPT}"
-  echo "DEBUG: ${CONDA_BIN}/python ${SCRIPT} ${IN_FILE_RAWFASTQ_FWD} 1>${OUT_FILE_GC} 2>>${LOG}"
+  echo "DEBUG: python ${SCRIPT} ${IN_FILE_RAWFASTQ_FWD} 1>${OUT_FILE_GC} 2>>${LOG}"
 
-  "${CONDA_BIN}"/python "${SCRIPT}" "${IN_FILE_RAWFASTQ_FWD}" 1>"${OUT_FILE_GC}" 2>>"${LOG}"
+  python "${SCRIPT}" "${IN_FILE_RAWFASTQ_FWD}" 1>"${OUT_FILE_GC}" 2>>"${LOG}"
 }
 
 {

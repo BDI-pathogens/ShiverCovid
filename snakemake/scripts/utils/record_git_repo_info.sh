@@ -2,15 +2,14 @@
 
 set -eu -o pipefail
 
-CONDA_BIN="${1}"
-OUT_FILE="${2}"
+OUT_FILE="${1}"
 LOG="${2}"
 
 {
-  REPO="$("${CONDA_BIN}"/git remote get-url origin)"
-  BRANCH="$("${CONDA_BIN}"/git rev-parse --abbrev-ref HEAD)"
-  RELEASE="$("${CONDA_BIN}"/git describe --tags --always)"
-  COMMIT_HASH="$("${CONDA_BIN}"/git rev-parse HEAD)"
+  REPO="$(git remote get-url origin)"
+  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  RELEASE="$(git describe --tags --always)"
+  COMMIT_HASH="$(git rev-parse HEAD)"
 
   echo "REPO: ${REPO}"
   echo "BRANCH: ${BRANCH}"

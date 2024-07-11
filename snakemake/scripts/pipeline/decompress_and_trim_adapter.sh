@@ -16,8 +16,8 @@ OUTPUT_FILES=(
 
 check_infile() {
   in_file="${1}"
-  if [[ ! -s "${in_file}" ]]; then
-    echo "WARNING: ${in_file} empty"
+  if [[ -z $(gzip -cd "${in_file}" | head -c1) ]]; then
+    echo "WARNING: ${in_file%.*} empty"
     create_dummy_files
     exit 0
   fi
@@ -75,6 +75,7 @@ decompress_and_trim_bwd() {
 
 {
   check_infile "${IN_FILE_GZ_FWD}"
+  check_infile "${IN_FILE_GZ_BWD}"
   decompress_fwd
   decompress_and_trim_bwd
   sanity_check

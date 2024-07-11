@@ -10,10 +10,13 @@ def create_dummy_output_file(out_file):
     Path(out_file).touch()
 
 
-def ungap(record):
-    logging.debug(f'ungap: record: {record}')
-    record.seq = record.seq.ungap('-')
-    return record
+def ungap(seq_object, gap_char='-'):
+    """Try both replace and ungap on seq objects, flexible to Biopython version"""
+    try:
+        seq_ungapped = seq_object.replace(gap_char, "")
+    except AttributeError:
+        seq_ungapped = seq_object.ungap(gap_char)
+    return seq_ungapped
 
 
 def main():
@@ -29,8 +32,8 @@ def main():
     else:
         print(f"Writing to {out_file}")
         record = next(SeqIO.parse(in_file, 'fasta'))
-        ungap_record = ungap(record)
-        SeqIO.write(ungap_record, out_file, 'fasta')
+        record.seq = ungap(record.seq, '-')
+        SeqIO.write(record, out_file, 'fasta')
 
 
 if __name__ == '__main__':

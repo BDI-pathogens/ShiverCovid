@@ -2,17 +2,16 @@
 
 set -eu -o pipefail
 
-CONDA_BIN="${1}"
-IN_FILE_FILT_FWD="${2}"
-IN_FILE_FILT_BWD="${3}"
-OUT_FILE_CLEAN_FWD="${4}"
-OUT_FILE_CLEAN_BWD="${5}"
-TMP_OUT_FILE_FQ_FWD="${6}"
-TMP_OUT_FILE_FQ_BWD="${7}"
-ADAPTERS_FILE="${8}"
-TRIMMOMATIC_MINLEN="${9}"
-LOG="${10}"
-CORES="${11}"
+IN_FILE_FILT_FWD="${1}"
+IN_FILE_FILT_BWD="${2}"
+OUT_FILE_CLEAN_FWD="${3}"
+OUT_FILE_CLEAN_BWD="${4}"
+TMP_OUT_FILE_FQ_FWD="${5}"
+TMP_OUT_FILE_FQ_BWD="${6}"
+ADAPTERS_FILE="${7}"
+TRIMMOMATIC_MINLEN="${8}"
+LOG="${9}"
+CORES="${10}"
 
 OUTPUT_FILES=(
   "${OUT_FILE_CLEAN_FWD}"
@@ -43,7 +42,7 @@ create_dummy_files() {
 run_trimmomatic() {
   echo "INFO: Running trimmomatic"
   set +e
-  "${CONDA_BIN}"/trimmomatic PE -threads "${CORES}" \
+  trimmomatic PE -threads "${CORES}" \
     "${IN_FILE_FILT_FWD}" "${IN_FILE_FILT_BWD}" \
     "${OUT_FILE_CLEAN_FWD}" "${TMP_OUT_FILE_FQ_FWD}" \
     "${OUT_FILE_CLEAN_BWD}" "${TMP_OUT_FILE_FQ_BWD}" \
@@ -62,7 +61,15 @@ run_trimmomatic() {
   fi
 }
 
+check_for_empty_output() {
+  out_file="${1}"
+  if [[ ! -s "${out_file}" ]]; then
+    echo "WARNING: No reads left after trimming"
+  fi
+}
+
 {
   check_infile "${IN_FILE_FILT_FWD}"
   run_trimmomatic
+  check_for_empty_output "${OUT_FILE_CLEAN_FWD}"
 } >"${LOG}" 2>&1

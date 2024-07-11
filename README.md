@@ -1,4 +1,4 @@
-[![PEP8 Python 3.7](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/pep8.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/pep8.yml)
+[![PEP8 Python 3.12](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/pep8.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/pep8.yml)
 [![Shellcheck](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/BDI-pathogens/ShiverCovid/actions/workflows/shellcheck.yml)
 
 # About
@@ -15,15 +15,13 @@ The snakemake workflow will fail upon error. Once an issue is resolved, it can b
 
 # Prerequisites
 
+- Slurm Workload Manager
 - Miniconda 3
 - Snakemake
-- Shiver 1.5.8 (and associated prerequisites) *
 
 The pipeline has been tested on a Linux environment using a Slurm Workload Manager.
 
 The project relies on a Kraken 2 database, which is not yet part of this repo so this solution is not currently (standalone) portable.
-
-\* The shiver package available in conda is out of date, and relies on `2to3`.
 
 ## Main conda environment
 
@@ -47,13 +45,6 @@ conda deactivate
 If it doesn't exist, create it using the instructions here:
 
 https://github.com/cov-lineages/pangolin#install-pangolin
-
-## Load Python 2
-
-Ensure the correct version of Python 2 is loaded, i.e. where shiver and it's prerequisites are installed. E.g:
-```
-module load python/2.7.11
-```
 
 # Running
 
@@ -81,15 +72,16 @@ module load python/2.7.11
     ```
    You will be prompted for input parameter(s).
 
-7. Execute the Snakemake workflow.
+7. Activate the conda environment:
+   ```
+   conda activate shivercovid
+   ```
+   
+8. Execute the Snakemake workflow.
 
    A script has been provided to submit the job to a Slurm Workload Manager: `./snakemake/submit.sh`
    
    Further information about executing Snakemake can be found in the documentation (https://snakemake.readthedocs.io/en/stable/).
-
-### Completion flag
-
-Once processing is complete, a flag file is created in the `COMPLETION_FLAG_DIR` defined in `_config.yaml`.
 
 ### Log files
 

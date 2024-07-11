@@ -4,12 +4,10 @@
 set -eu -o pipefail
 
 CONFIG_FILE="../../ShiverCovid/snakemake/config.yaml" # Relative to OUTPUT_DIR_SHIVER_MAP/{samples} (set in Snakefile)
-CONDA_BIN=$(grep "CONDA_BIN" <"${CONFIG_FILE}" | sed -e "s/CONDA_BIN: //" | cut -f1 -d" ")
 SHIVER_MAPPER=$(grep "SHIVER_MAPPER" <"${CONFIG_FILE}" | sed -e "s/SHIVER_MAPPER: //" | cut -f1 -d" ")
 RAW_MINCOV_RELAXED=$(grep "RAW_MINCOV_RELAXED" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_RELAXED: //" | cut -f1 -d" ")
 RAW_MINCOV_STRICT=$(grep "RAW_MINCOV_STRICT" <"${CONFIG_FILE}" | sed -e "s/RAW_MINCOV_STRICT: //" | cut -f1 -d" ")
 
-echo "CONDA_BIN is set to '${CONDA_BIN}'"
 echo "SHIVER_MAPPER is set to '${SHIVER_MAPPER}'"
 echo "RAW_MINCOV_RELAXED is set to '${RAW_MINCOV_RELAXED}'"
 echo "RAW_MINCOV_STRICT is set to '${RAW_MINCOV_STRICT}'"
@@ -19,32 +17,34 @@ echo "RAW_MINCOV_STRICT is set to '${RAW_MINCOV_STRICT}'"
 # Note that for boolean variables, only the exact value "true" (all lower case)
 # will be interpreted as true, anything else is taken to mean false.
 
-# Two options only needed for the fully automatic version: the maximum allowed
-# percentage of gaps inside contigs when aligned to their closest reference (too
-# much gap content indicates misalignment, rather than deletions), and the
-# minimum fraction of a contig's length that blasts to HIV.
-MaxContigGappiness=0.05
-MinContigHitFrac=0.9
-
 # What do you have to type into the command line to make these commands execute?
 # (If the binary file lives in a directory that is not included in your $PATH
 # variable, you will need to include the path here.)
-python2='python2'
-BlastDBcommand="${CONDA_BIN}/makeblastdb"
-BlastNcommand="${CONDA_BIN}/blastn"
-smalt="${CONDA_BIN}/smalt"
-bwa="${CONDA_BIN}/bwa"
-bowtie2="${CONDA_BIN}/bowtie2"
-bowtie2_build="${CONDA_BIN}/bowtie2-build"
-samtools="${CONDA_BIN}/samtools"
-mafft="${CONDA_BIN}/mafft"
-fastaq="${CONDA_BIN}/fastaq"
-# If you've downloaded the trimmomatic executable file (ending in .jar), to run
-# it you probably need to type something like this:
-# java -jar path/to/where/it/lives/trimmomatic-0.36.jar
-# If someone else installed it for you (e.g. on MRC CLIMB) there may be an alias
-# which means you just type 'trimmomatic' to run it:
-trimmomatic="${CONDA_BIN}/trimmomatic"
+python='python3'
+BlastDBcommand="makeblastdb"
+BlastNcommand="blastn"
+smalt="smalt"
+bwa="bwa"
+bowtie2="bowtie2"
+bowtie2_build="bowtie2-build"
+samtools="samtools"
+mafft="mafft"
+fastaq="fastaq"
+# If shiver is installed with conda, you can run trimmomatic simply typing
+# 'trimmomatic' at the command line. Otherwise, to be able to do that,
+# 1. in a file named 'trimmomatic' (no file extension) copy the next three lines:
+# ThisDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# TheBinary=$(ls "$ThisDir"/trimmomatic-*.jar)
+# java -jar "$TheBinary" "$@" || { echo "Problem running Trimmomatic."; exit 1; }
+# and remove the # character at the start of each line
+# 2. make that file executable, e.g. running the 'chmod u+x' command on it from
+# the command line
+# 3. move that file to the same directory that contains the trimmomatic java
+# file you have downloaded, usually named like trimmomatic-XXX.jar (with numbers
+# instead of XXX)
+# 4. Add that directory to your PATH variable (Google how to do this if needed).
+# After those four steps, you can leave the variable below set to 'trimmomatic'.
+trimmomatic="trimmomatic"
 # If you leave 'GiveHXB2coords', below, as 'true', we'll do pairwise alignment
 # of the mapping reference with HXB2. You may as well use mafft options to make
 # it more accurate (though slower).
@@ -78,7 +78,7 @@ TrimToKnownGenome=true
 # the results. With this default, we try only -task megablast; if
 # 'megablast blastn' were specified instead, we would also try -task blastn (and
 # merge results).
-BlastTasks="megablast"
+BlastTasks='megablast'
 
 # Options to give blast when blasting the contigs; run your blastn command with
 # -help to investigate possibilities.
@@ -93,8 +93,7 @@ ContigBlastArgs="-max_target_seqs 1 -word_size 17"
 # A value of 1 or greater means partially overlapping hits are never merged
 # (which is how shiver has always behaved). A value between 0 and 1 means they
 # may or may not be merged, depending on how strongly they overlap.
-# Pending imminent testing the current default is likely to be changed to 0.8.
-ContigMinBlastOverlapToMerge='2'
+ContigMinBlastOverlapToMerge='0.8'
 
 # If you have a more recent mafft installation that includes the --addfragments
 # option, we will use both --addfragments and --add to align the contigs to the
@@ -131,6 +130,8 @@ mapper="${SHIVER_MAPPER}"
 
 # Check the smalt documentation for a full explanation of options,
 # including those not used by default here.
+# The default options listed use the -x, -i, and -j options, which are needed for
+# paired read data but should not be used for unpaired reads.
 # A summary of the index options used below:
 # -k sets the word (kmer) length, -s the sampling step size (i.e. is every word
 #  hashed, or every second word, or one word in every 3, ...), when a hash table
@@ -146,6 +147,8 @@ smaltMapOptions="-x -y 0.7 -j 0 -i 2000"
 
 # Check the bowtie2 documentation for a full explanation of options,
 # including those not used by default here.
+# The default options listed use the options --maxins and --no-discordant, which
+# are needed for paired read data but should not be use for unpaired reads.
 # A summary of the options used below:
 # --local means bowtie might soft-clip read ends if doing so maximizes the
 # alignment score.
@@ -172,7 +175,7 @@ bwaOptions='-v 2'
 # gives a more user-friendly correspondance between SAM flags and kinds of
 # reads.
 # The flags used below mean unmapped reads are excluded (-F 4) and only properly
-# aligned pairs are kept (-f 3).
+# aligned pairs are kept (-f 3). The '-f 3' should be removed for unpaired data.
 samtoolsReadFlags='-f 3 -F 4'
 
 # See http://www.htslib.org/doc/samtools.html for a description of samtools
@@ -220,7 +223,7 @@ deduplicate=true
 # include options in this command, such as a non-default
 # DUPLICATE_SCORING_STRATEGY, but do not include options relating to file-naming
 # or the associated shiver commands will break):
-DeduplicationCommand="${CONDA_BIN}/picard MarkDuplicates"
+DeduplicationCommand="picard MarkDuplicates"
 
 # Shall we remap to the consensus? (For remapping, gaps in coverage in the
 # consensus will filled in by the corresponding part of the orginal reference,
@@ -252,6 +255,14 @@ AlignContigsToConsensus=false
 # true means the reads in that state don't have 'temp_' prepended to their
 # filenames - handy if you want to keep them. (By request of shiver-pro Tanya!)
 KeepPreMappingReads=false
+
+# Finally, these two options are only needed for the deprecated 'fully automatic'
+# version of shiver (bin/deprecated/shiver_full_auto.sh): the maximum allowed
+# percentage of gaps inside contigs when aligned to their closest reference (too
+# much gap content indicates misalignment, rather than deletions), and the
+# minimum fraction of a contig's length that blasts to HIV.
+MaxContigGappiness=0.05
+MinContigHitFrac=0.9
 
 # Suffixes we'll append to the sample ID for output files.
 # If you change the extension (whatever follows the dot) you might break
@@ -288,7 +299,7 @@ HIVContigsListOrig='temp_HIVContigsListOrig.txt'
 HIVContigsListUser='temp_HIVContigsListUser.txt'
 ContaminantContigsList='temp_ContaminantContigsList.txt'
 RefAndContaminantContigs='temp_RefAndContaminantContigs.fasta' # no whitespace!
-BlastDB='temp_BlastDB'                                         # no whitespace!
+BlastDB='temp_BlastDB' # no whitespace!
 BadReadsBaseName='temp_ContaminantReads'
 smaltIndex='temp_smaltRefIndex'
 bowtieIndex='temp_bowtieRefIndex'
