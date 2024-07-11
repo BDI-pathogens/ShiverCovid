@@ -4,7 +4,7 @@ ADAPTERS_FILE: adapters-all.fasta
 LINEAGE_FILE: lineages-20200622.csv.gz
 REF_STEM_FILE: NC_045512.2_SARS_CoV2_Wuhan.fasta
 
-SHIVER_MAPPER: bowtie  # smalt, bwa or bowtie
+SHIVER_MAPPER: smalt  # smalt, bwa or bowtie
 SHIVER_INIT_DIR: ShiverInitDir
 RAW_SHIVER_CONFIG: shiver_config_raw.sh
 RAW_MINCOV_RELAXED: 2
